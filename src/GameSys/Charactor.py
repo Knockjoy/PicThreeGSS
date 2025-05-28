@@ -19,6 +19,7 @@ S=TypeVar("S")
 class Status(Generic[S]):
     chara_name:str
     id:int
+    lookskill:bool #このターンにskillを選択できるか
     hp:float
     attack:float
     defence:float
@@ -118,6 +119,7 @@ class Attacker(Charactor):
         self.strongPower=self.status.attack+storngPower
         self.strongPitchAwayPr=strongPitchAwayPr
         self.oneHitKillProBability=oneHitKillPr
+        # TODO:スキルの待ちターンについて
     
     def strongAttack(self,target:Charactor)->None:
         """

@@ -11,10 +11,23 @@ import Player
 
 class Battle:
     def __init__(self,p1:Player,p2:Player):
+        # players
         self.p1=p1
         self.p2=p2
-        self._check_exepcetion()
+        # ターン数
+        self.turn=0
+        
+        self._first_check_exception()
     
-    def _check_exepcetion(self):
-        # 例外チェック
+    def _first_check_exception(self):
+        # initの例外チェック
+        # TODO:例外を投げずにreturnし、APIを発行
+        pass
+    
+    def exec_battle(self):
+        self._check_exception()
+        pass
+    
+    def _check_exception(self):
+        # TODO:例外を投げずにreturnし、APIを発行
         pass
