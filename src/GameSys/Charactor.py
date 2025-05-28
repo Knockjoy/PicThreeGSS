@@ -17,6 +17,8 @@ S=TypeVar("S")
 # キャラクターの状態管理
 @dataclass
 class Status(Generic[S]):
+    chara_name:str
+    id:int
     hp:float
     attack:float
     defence:float
