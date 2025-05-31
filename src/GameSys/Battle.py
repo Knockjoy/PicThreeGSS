@@ -31,3 +31,7 @@ class Battle:
     def _check_exception(self):
         # TODO:例外を投げずにreturnし、APIを発行
         pass
+
+
+if __name__ == "__main__":
+    pass

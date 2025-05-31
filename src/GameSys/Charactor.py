@@ -7,54 +7,82 @@
 #Charactor.pyではキャラクターの定義に関するプログラムを書いていきます。
 
 from abc import *
-from dataclasses import dataclass
-from typing import Generic,TypeVar
+from dataclasses import dataclass,field
+from typing import Generic,TypeVar,List
 import random
 
 C=TypeVar("C")
 C_=TypeVar("C_")
 S=TypeVar("S")
+
+# TODO:技の発動タイミング
+
 # キャラクターの状態管理
 @dataclass
-class Status(Generic[S]):
-    chara_name:str
-    id:int
-    lookskill:bool #このターンにskillを選択できるか
+class CharactorStatus(Generic[S]):
     hp:float
     attack:float
     defence:float
     speed:float
-    
-    def __add__(self,status:S):
-        self.hp+=status.hp
-        self.attack+=status.attack
-        self.defence+=status.defence
-        self.speed+=status.speed
-    def __sub__(self,status:S):
-        self.hp-=status.hp
-        self.attack-=status.attack
-        self.defence-=status.defence
-        self.speed-=status.speed
-    def addStatus(self,status:S):
-        self.hp+=status.hp
-        self.attack+=status.attack
-        self.defence+=status.defence
-        self.speed+=status.speed
-    def subStatus(self,status:S):
-        self.hp-=status.hp
-        self.attack-=status.attack
-        self.defence-=status.defence
-        self.speed-=status.speed
+    queue:List[List[S,int]]=field(default_factory=list)
+    # def __add__(self,status:S,lifetime:int=-1):
+    #     self.queue.append(status,lifetime)
+    # def __sub__(self,status:S,lifetime:int=-1):
+    #     self.queue.append(status,lifetime)
+    def addStatus(self,status:S,lifetime:int=-1):
+        self.queue.append(status,lifetime)
 
+    def sum(self)->S:
+        pass
+    def nextTurn(self):
+        rem=[]
+        for i in range(len(self.queue)-1):
+            n=self.queue[i]
+            if n-1==-1: # 0から-1になった場合
+                rem.append(i)
+        for i in sorted(rem,reverse=True):
+            self.queue.pop(i) # 切れた効果を消す
+    
+@dataclass
+class RoleStatus():
+    """
+    chara_name:管理名
+    nickname:プレイヤーに表示されるキャラクターの名前
+    # id:内部管理
+    """
+    chara_name:str
+    nickname:str
+    # id:int
+    # lookskill:bool #このターンにskillを選択できるか
+
+@dataclass
+class SkillStatus:
+    """
+    name:関数名,管理名
+    nickname:プレイヤーに表示される技の名前
+    lookturn:次使えるまでのターン数
+    nowlookturn:現在の待ちターン数(減数方式)
+    usetimes:使用回数(-1は無限)
+    target_exist:ターゲットの存在
+    """
+    name:str
+    nickname:str
+    lookturn:int=0
+    nowlooktime:int=0
+    usetimes:int=-1
+    target_exist:bool=True
 
 # charactor の設定
 # Charactor_は抽象基底クラスなのであるべき機能の設定のみが行われます。
 class Charactor_(ABC,Generic[C_]):
     def __init__(
         self,
-        status:Status,
+        status:CharactorStatus,
+        Role:RoleStatus
         ):
-        self.status:Status=status
+        self.status:CharactorStatus=status
+        self.role=Role
+        
     # 通常攻撃
     def nomalAttack(self,target:C_,):
         target.status.hp-=self.status.attack
@@ -64,11 +92,11 @@ class Charactor_(ABC,Generic[C_]):
     
     # デバフを受けたとき
     @abstractmethod
-    def receveDeBuff(self,DeBuff:Status):pass
+    def receveDeBuff(self,DeBuff:CharactorStatus):pass
     
     # バフを受けたとき
     @abstractmethod
-    def receveBuff(self,Buff:Status):pass
+    def receveBuff(self,Buff:CharactorStatus):pass
     
     # マインドコントロールを受けたとき
     @abstractmethod
@@ -77,8 +105,8 @@ class Charactor_(ABC,Generic[C_]):
 
 # Charactorの実装
 class Charactor(Charactor_):
-    def __init__(self, status):
-        super().__init__(status)
+    def __init__(self, status,role):
+        super().__init__(status,role)
     
     def nomalAttack(self, target:C):
         return super().nomalAttack(target)
@@ -86,21 +114,22 @@ class Charactor(Charactor_):
     def receveDamage(self, damage:float)->None:
         self.status.hp-=damage
     
-    def receveBuff(self, Buff:Status):
-        self.status+=Buff
+    def receveBuff(self, Buff:CharactorStatus,lifetime:int=-1):
+        self.status.addStatus(Buff,lifetime)
     
-    def receveDeBuff(self, DeBuff):
-        self.status-=DeBuff
+    def receveDeBuff(self, DeBuff:CharactorStatus,lifetime:int=-1):
+        self.status.addStatus(DeBuff,lifetime)
     
     def receveMaind(self):
-        # TODO:どうやって技してするか
+        # TODO:どうやって技を実装するか
         pass
     
 
 # Attackerの設定
 class Attacker(Charactor):
     def __init__(self,
-                status:Status,
+                status:CharactorStatus,
+                role:RoleStatus,
                 storngPower:float,
                 strongPitchAwayPr:float,
                 oneHitKillPr:float,):
@@ -115,10 +144,17 @@ class Attacker(Charactor):
         - strongAttackで一撃必殺が発生する確率
         
         """
-        super().__init__(status)
+        super().__init__(status,role)
         self.strongPower=self.status.attack+storngPower
         self.strongPitchAwayPr=strongPitchAwayPr
         self.oneHitKillProBability=oneHitKillPr
+        self.skills={
+            "skills":[
+                [SkillStatus(
+                    "strongAttack","強い攻撃",3,0,-1,True
+                ),self.strongAttack]
+            ]
+        }
         # TODO:スキルの待ちターンについて
     
     def strongAttack(self,target:Charactor)->None:
@@ -128,6 +164,7 @@ class Attacker(Charactor):
         TODO:計算方法の決定
         ダメージ=通常攻撃の1.5倍？確率で一撃
         """
+        # 止められるときの処理
         if random.random()>self.strongPitchAwayPr: # hitしたとき
             if random.random()<=self.oneHitKillProBability: # 一撃必殺したとき
                 self.oneHitKill(target)
@@ -139,3 +176,52 @@ class Attacker(Charactor):
     
     def oneHitKill(self,target:Charactor):
         target.receveDamage(target.status.hp)
+
+class Healer(Charactor):
+    def __init__(self, 
+                status:CharactorStatus,
+                role:RoleStatus,
+                recoveryPower:float,
+                powerfulBuff:CharactorStatus,
+                selfDeBuff:CharactorStatus
+                ):
+        """
+        status:キャラクターの状態
+        role:キャラクターに関する情報
+        recoveryPower:通常回復力
+        powerfulBuff:回復力およびバフ
+        selfDeBuff:バフ＆ヒールを実行した際に自身が負うデバフ
+        """
+        
+        super().__init__(status,role)
+        self.recoveryPower:float=recoveryPower
+        self.powerfulRecoveryPower=powerfulBuff
+        self.selfDeBuff=selfDeBuff
+        self.skills={
+            "skills":[
+                [SkillStatus(
+                    name="buffAndHeal",
+                    nickname="バフ＆ヒール",
+                    lookturn=1,
+                    nowlooktime=0
+                ),self.buffHeal],
+                SkillStatus(
+                    name="normalHeal",
+                    nickname="通常回復",
+                    lookturn=0,
+                    nowlooktime=0
+                )
+            ]
+        }
+    
+    def buffHeal(self,target:Charactor):
+        target.receveBuff(self.powerfulRecoveryPower)
+        self.receveDeBuff(self.selfDeBuff,1)
+        pass
+    
+    def normalHeal(self,target:Charactor):
+        target.receveBuff(CharactorStatus(self.recoveryPower,0,0,0),-1)
+        pass
+
+
+
