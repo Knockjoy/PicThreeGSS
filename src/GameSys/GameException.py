@@ -10,3 +10,15 @@ class NotSelectedTarget(Exception):
 class NoSkillCredit(Exception):
     def __str__(self):
         return "使用制限超過です。"
+
+class NoselectedSkill(Exception):
+    def __str__(self):
+        return "スキルが選択されていません"
+
+class DontUseSkill(Exception):
+    def __str__(self):
+        return "スキルが使用できません。"
+
+class DontReselect(Exception):
+    def __str__(self):
+        return "技のリセレクトはできません。"
