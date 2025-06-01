@@ -30,8 +30,7 @@ class Battle1v1:
         queue = self.sortCardsQueue()
         # TODO:Tryさせる
         for i in queue:
-            cardSkill = i[0].thisTurnSkill
-            cardSkill[0][1](cardSkill[1])  # 技を実行
+            i[0].execSkill()
 
     def sortCardsQueue(self):
         allCards: List[Charactor] = list()

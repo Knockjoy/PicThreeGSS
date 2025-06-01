@@ -8,7 +8,7 @@
 
 from abc import *
 from dataclasses import dataclass, field
-from typing import Generic, TypeVar, List, Union
+from typing import Generic, TypeVar, List, Union,Callable
 import random
 import GameException
 
@@ -161,6 +161,10 @@ class Charactor_(ABC, Generic[C_]):
     @abstractmethod
     def setThisTurnSkill(self, skill):
         pass
+    
+    @abstractmethod
+    def execSkill(self):
+        pass
 
 
 # Charactorの実装
@@ -213,7 +217,11 @@ class Attacker(Charactor):
         self.strongPower = self.status.attack + storngPower
         self.strongHitAwayPr = strongHitPr
         self.oneHitKillProBability = oneHitKillPr
-        self.skills = [
+        self.onehitkillmsg="一撃必殺が当たった！！"
+        self.strongAttackmsg="強い攻撃がヒット！！"
+        self.weakattackmsg="攻撃を与えた！"
+        self.missSkill="攻撃を外した。。。"
+        self.skills:List[Union[SkillStatus,Callable]] = [
             [
                 SkillStatus("strongAttack", "強い攻撃", 3, 0, -1, True),
                 self.strongAttack,
@@ -232,30 +240,38 @@ class Attacker(Charactor):
         # 止められるときの処理
         if random.random() < self.strongHitAwayPr:  # hitしたとき
             if random.random() <= self.oneHitKillProBability:  # 一撃必殺したとき
-                self.oneHitKill(target)
-                return None
+                self._oneHitKill(target)
+                return self.onehitkillmsg
             else:
                 target.receveDamage(self.strongPower)
-                return None
+                return self.strongAttackmsg
+        return self.missSkill
+
+    def _oneHitKill(self, target: Charactor):
+        target.receveDamage(target.status.hp)
         return None
 
-    def oneHitKill(self, target: Charactor):
-        target.receveDamage(target.status.hp)
-
-    def weakAttack(self, target):
+    def weakAttack(self, target:Charactor):
         # TODO:弱い攻撃の実装
-        pass
+        target.receveDamage(self.status.attack)
+        return self.weakattackmsg
 
     def nextTurn(self):
         for i in self.skills[0]:
             i[0].nextTrun()
 
+    def execSkill(self):
+        # TODO:self.thisTurnSkillが存在するか
+        # TODO:技ステータスに例外はないか
+        self.thisTurnSkill[0][1](self.thisTurnSkill[1]) # 技を実行
+        self.thisTurnSkill[0][0].useSkill() # 技ステータスに反映
+    
     def setThisTurnSkill(self, skill, target=None):
         # TODO:例外チェック
         skill_status: SkillStatus = skill[0]
         if skill_status.target_exist and target == None:
             raise GameException.NotSelectedTarget()  # 対象がいないとき
-        self.thisTurnSkill = [skill, target]
+        self.thisTurnSkill:List[Union[List[SkillStatus,Callable],Charactor]] = [skill, target]
 
 
 class Healer(Charactor):
@@ -319,6 +335,12 @@ class Healer(Charactor):
         if skill_status.target_exist and target == None:
             raise GameException.NotSelectedTarget()  # 対象がいないとき
         self.thisTurnSkill = [skill, target]
+    
+    def execSkill(self):
+        # TODO:self.thisTurnSkillが存在するか
+        # TODO:技ステータスに例外はないか
+        self.thisTurnSkill[0][1](self.thisTurnSkill[1]) # 技を実行
+        self.thisTurnSkill[0][0].useSkill() # 技ステータスに反映
 
 
 if __name__ == "__main__":
