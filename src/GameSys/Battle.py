@@ -26,7 +26,7 @@ class Battle1v1:
         pass
 
     def exec_battle(self):
-        self._check_exception() # TODO:すべてのカードにスキルがセットされているか
+        self._check_exception()  # TODO:すべてのカードにスキルがセットされているか
         queue = self.sortCardsQueue()
         # TODO:Tryさせる
         for i in queue:
@@ -49,7 +49,6 @@ class Battle1v1:
         )
 
         return result
-
 
     def nextturn(self):
         # カードの待ちターン処理
@@ -88,9 +87,9 @@ if __name__ == "__main__":
     )
     you = Player("yuki", [you1, you2])
     bt = Battle1v1(my, you)
-    my1.setThisTurnSkill(my1.skills[0],you1)
-    my2.setThisTurnSkill(my2.skills[1],my1)
-    you1.setThisTurnSkill(my1.skills[1],my1)
-    you2.setThisTurnSkill(my2.skills[1],you1)
+    my1.setThisTurnSkill(my1.skills[0], you1)
+    my2.setThisTurnSkill(my2.skills[1], my1)
+    you1.setThisTurnSkill(my1.skills[0], my1)
+    you2.setThisTurnSkill(my2.skills[1], you1)
     bt.exec_battle()
     print(bt.p1.cards[0].status)

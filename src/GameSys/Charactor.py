@@ -8,7 +8,7 @@
 
 from abc import *
 from dataclasses import dataclass, field
-from typing import Generic, TypeVar, List,Union
+from typing import Generic, TypeVar, List, Union
 import random
 import GameException
 
@@ -26,13 +26,13 @@ class CharactorStatus(Generic[S]):
     attack: float
     defence: float
     speed: float
-    queue: List[Union[S, int]]=field(default_factory=list)
+    queue: List[Union[S, int]] = field(default_factory=list)
 
-    def __add__(self,status:S):
-        self.hp+=status.hp
-        self.attack+=status.attack
-        self.defence+=status.defence
-        self.speed+=status.speed
+    def __add__(self, status: S):
+        self.hp += status.hp
+        self.attack += status.attack
+        self.defence += status.defence
+        self.speed += status.speed
         return self
 
     # def __add__(self,status:S,lifetime:int=-1):
@@ -43,10 +43,10 @@ class CharactorStatus(Generic[S]):
         self.queue.append([status, lifetime])
 
     def sum(self) -> S:
-        result=CharactorStatus(0,0,0,0)
+        result = CharactorStatus(0, 0, 0, 0)
         for i in self.queue:
-            result+=i[0]
-        result+=self
+            result += i[0]
+        result += self
         return result
 
     def nextTurn(self):
@@ -90,7 +90,22 @@ class SkillStatus:
     nowlooktime: int = 0
     usetimes: int = -1
     target_exist: bool = True
-    # TODO:use skill
+
+    def useSkill(self):
+        n = self.usetimes - 1
+        # 使用制限
+        if n == -1:
+            self.nowlooktime = 0
+            raise GameException.NoSkillCredit()
+        # 無限回
+        elif n == -2:
+            self.nowlooktime = -1
+        # 減数
+        else:
+            self.nowlooktime = n
+
+        self.nowlooktime += self.lookturn  # 待機ターンを作成
+
     def nextTurn(self):
         n = self.nowlooktime - 1
         if n == -1:
@@ -177,23 +192,26 @@ class Attacker(Charactor):
         status: CharactorStatus,
         role: RoleStatus,
         storngPower: float,
-        strongPitchAwayPr: float,
+        strongHitPr: float,
         oneHitKillPr: float,
     ):
         """
         status:Status
         - アタッカー自身の状態を示します。
+
         strongPower:float
         - strongAttackの増加量または増倍量
+
         strongPitchAwayPr
-        - strongAttackの外れる確率
+        - strongAttackのあたる確率
+
         oneHitKillPr
         - strongAttackで一撃必殺が発生する確率
 
         """
         super().__init__(status, role)
         self.strongPower = self.status.attack + storngPower
-        self.strongPitchAwayPr = strongPitchAwayPr
+        self.strongHitAwayPr = strongHitPr
         self.oneHitKillProBability = oneHitKillPr
         self.skills = [
             [
@@ -212,7 +230,7 @@ class Attacker(Charactor):
         ダメージ=通常攻撃の1.5倍？確率で一撃
         """
         # 止められるときの処理
-        if random.random() > self.strongPitchAwayPr:  # hitしたとき
+        if random.random() < self.strongHitAwayPr:  # hitしたとき
             if random.random() <= self.oneHitKillProBability:  # 一撃必殺したとき
                 self.oneHitKill(target)
                 return None
@@ -224,7 +242,7 @@ class Attacker(Charactor):
     def oneHitKill(self, target: Charactor):
         target.receveDamage(target.status.hp)
 
-    def weakAttack(self,target):
+    def weakAttack(self, target):
         # TODO:弱い攻撃の実装
         pass
 
@@ -237,8 +255,7 @@ class Attacker(Charactor):
         skill_status: SkillStatus = skill[0]
         if skill_status.target_exist and target == None:
             raise GameException.NotSelectedTarget()  # 対象がいないとき
-        self.thisTurnSkill=[skill,target]
-
+        self.thisTurnSkill = [skill, target]
 
 
 class Healer(Charactor):
@@ -262,7 +279,7 @@ class Healer(Charactor):
         self.recoveryPower: float = recoveryPower
         self.powerfulRecoveryPower = powerfulBuff
         self.selfDeBuff = selfDeBuff
-        self.thisTurnSkill=[]
+        self.thisTurnSkill = []
         self.skills = [
             [
                 SkillStatus(
@@ -283,7 +300,7 @@ class Healer(Charactor):
 
     # TODO:show my skills
     def buffHeal(self, target: Charactor):
-        
+
         target.receveBuff(self.powerfulRecoveryPower)
         self.receveDeBuff(self.selfDeBuff, 1)
         pass
@@ -301,15 +318,15 @@ class Healer(Charactor):
         skill_status: SkillStatus = skill[0]
         if skill_status.target_exist and target == None:
             raise GameException.NotSelectedTarget()  # 対象がいないとき
-        self.thisTurnSkill=[skill,target]
+        self.thisTurnSkill = [skill, target]
 
 
 if __name__ == "__main__":
     # SkillStatus("aaa", "bbb", 0, 0, -1, True).nextTurn()
-    cs=CharactorStatus(10,10,10,10)
-    q1=CharactorStatus(20,20,20,20)
-    q2=CharactorStatus(20,20,-5,20)
-    cs.addStatus(q1,-1)
-    cs.addStatus(q2,-1)
+    cs = CharactorStatus(10, 10, 10, 10)
+    q1 = CharactorStatus(20, 20, 20, 20)
+    q2 = CharactorStatus(20, 20, -5, 20)
+    cs.addStatus(q1, -1)
+    cs.addStatus(q2, -1)
     print(cs)
     print(cs.sum())
