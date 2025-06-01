@@ -15,4 +15,4 @@ import random
 @dataclass
 class Player:
     user_name:str
-    cards:List[List[Charactor]]=field(default_factory=list)
+    cards:List[Charactor]=field(default_factory=list)
