@@ -221,8 +221,13 @@ class Attacker(Charactor):
         for i in self.skills[0]:
             i[0].nextTrun()
 
-    def useSkill(self, skill):
-        pass
+    def setThisTurnSkill(self, skill, target=None):
+        # TODO:例外チェック
+        skill_status: SkillStatus = skill[0]
+        if skill_status.target_exist and target == None:
+            raise GameException.NotSelectedTarget()  # 対象がいないとき
+        self.thisTurnSkill=[skill,target]
+
 
 
 class Healer(Charactor):
@@ -246,6 +251,7 @@ class Healer(Charactor):
         self.recoveryPower: float = recoveryPower
         self.powerfulRecoveryPower = powerfulBuff
         self.selfDeBuff = selfDeBuff
+        self.thisTurnSkill=[]
         self.skills = [
             [
                 SkillStatus(
@@ -277,12 +283,12 @@ class Healer(Charactor):
         for i in self.skills[0]:
             i[0].nextTrun()
 
-    def useSkill(self, skill, target=None):
+    def setThisTurnSkill(self, skill, target=None):
         # TODO:例外チェック
         skill_status: SkillStatus = skill[0]
         if skill_status.target_exist and target == None:
             raise GameException.NotSelectedTarget()  # 対象がいないとき
-        skill[1](target)
+        self.thisTurnSkill=[skill,target]
 
 
 if __name__ == "__main__":
