@@ -3,35 +3,54 @@
 ################
 # Battle.py #
 ################
-# 
-#Battle.pyではバトル整理の定義に関するプログラムを書いていきます。
+#
+# Battle.pyではバトル整理の定義に関するプログラムを書いていきます。
 
 from Player import Player
 from Charactor import *
 
+
 class Battle1v1:
-    def __init__(self,p1:Player,p2:Player):
+    def __init__(self, p1: Player, p2: Player):
         # players
-        self.p1=p1
-        self.p2=p2
+        self.p1 = p1
+        self.p2 = p2
         # ターン数
-        self.turn=0
-        
+        self.turn = 0
+
         self._first_check_exception()
-    
+
     def _first_check_exception(self):
         # initの例外チェック
         # TODO:例外を投げずにreturnし、APIを発行
         pass
-    
+
     def exec_battle(self):
-        self._check_exception()
-        pass
-    
-    def use_skill(self):
-        
-        pass
-    
+        self._check_exception() # TODO:すべてのカードにスキルがセットされているか
+        queue = self.sortCardsQueue()
+        # TODO:Tryさせる
+        for i in queue:
+            cardSkill = i[0].thisTurnSkill
+            cardSkill[0][1](cardSkill[1])  # 技を実行
+
+    def sortCardsQueue(self):
+        allCards: List[Charactor] = list()
+        for i in [self.p1, self.p2]:
+            allCards.extend(i.cards)  # すべてのカードを格納
+        randomBox = list(range(len(allCards)))  # 乱数用
+        cardAspeed = list()
+        for i in allCards:
+            rn = random.choice(randomBox)  # スピードが一致した時用の乱数
+            cardAspeed.append([i, i.status.sum().speed, rn])
+            randomBox.remove(rn)
+
+        result: List[Union[Charactor, int, int]] = sorted(
+            cardAspeed, key=lambda x: (x[1], x[2])
+        )
+
+        return result
+
+
     def nextturn(self):
         # カードの待ちターン処理
         for i in self.p1.cards:
@@ -39,17 +58,39 @@ class Battle1v1:
         for j in self.p2.cards:
             j.nextTrun()
         pass
-    
+
     def _check_exception(self):
         # TODO:例外を投げずにreturnし、APIを発行
         pass
 
 
 if __name__ == "__main__":
-    my1=Attacker(CharactorStatus(10,1,2,3),RoleStatus("attacker","pipi"),10,15,20)
-    my2=Healer(CharactorStatus(10,0,10,10),RoleStatus("healer","qiqi"),10,CharactorStatus(10,10,10,10),CharactorStatus(-10,0,0,0))
-    my=Player("yuki",[my1,my2])
-    you1=Attacker(CharactorStatus(10,1,2,3),RoleStatus("attacker","pipi"),10,15,20)
-    you2=Healer(CharactorStatus(10,0,10,10),RoleStatus("healer","qiqi"),10,CharactorStatus(10,10,10,10),CharactorStatus(-10,0,0,0))
-    you=Player("yuki",[you1,you2])
-    bt=Battle1v1(my,you)
+    my1 = Attacker(
+        CharactorStatus(10, 1, 2, 3), RoleStatus("attacker", "pipi"), 10, 15, 20
+    )
+    my2 = Healer(
+        CharactorStatus(10, 0, 10, 10),
+        RoleStatus("healer", "qiqi"),
+        10,
+        CharactorStatus(10, 10, 10, 10),
+        CharactorStatus(-10, 0, 0, 0),
+    )
+    my = Player("yuki", [my1, my2])
+    you1 = Attacker(
+        CharactorStatus(10, 1, 2, 3), RoleStatus("attacker", "pipi"), 10, 15, 20
+    )
+    you2 = Healer(
+        CharactorStatus(10, 0, 10, 10),
+        RoleStatus("healer", "qiqi"),
+        10,
+        CharactorStatus(10, 10, 10, 10),
+        CharactorStatus(-10, 0, 0, 0),
+    )
+    you = Player("yuki", [you1, you2])
+    bt = Battle1v1(my, you)
+    my1.setThisTurnSkill(my1.skills[0],you1)
+    my2.setThisTurnSkill(my2.skills[1],my1)
+    you1.setThisTurnSkill(my1.skills[1],my1)
+    you2.setThisTurnSkill(my2.skills[1],you1)
+    bt.exec_battle()
+    print(bt.p1.cards[0].status)

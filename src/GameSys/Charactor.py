@@ -8,7 +8,7 @@
 
 from abc import *
 from dataclasses import dataclass, field
-from typing import Generic, TypeVar, List
+from typing import Generic, TypeVar, List,Union
 import random
 import GameException
 
@@ -26,17 +26,28 @@ class CharactorStatus(Generic[S]):
     attack: float
     defence: float
     speed: float
-    queue: List[List[S, int]] = field(default_factory=list)
+    queue: List[Union[S, int]]=field(default_factory=list)
+
+    def __add__(self,status:S):
+        self.hp+=status.hp
+        self.attack+=status.attack
+        self.defence+=status.defence
+        self.speed+=status.speed
+        return self
 
     # def __add__(self,status:S,lifetime:int=-1):
     #     self.queue.append(status,lifetime)
     # def __sub__(self,status:S,lifetime:int=-1):
     #     self.queue.append(status,lifetime)
     def addStatus(self, status: S, lifetime: int = -1):
-        self.queue.append(status, lifetime)
+        self.queue.append([status, lifetime])
 
     def sum(self) -> S:
-        pass
+        result=CharactorStatus(0,0,0,0)
+        for i in self.queue:
+            result+=i[0]
+        result+=self
+        return result
 
     def nextTurn(self):
         rem = []
@@ -79,7 +90,7 @@ class SkillStatus:
     nowlooktime: int = 0
     usetimes: int = -1
     target_exist: bool = True
-
+    # TODO:use skill
     def nextTurn(self):
         n = self.nowlooktime - 1
         if n == -1:
@@ -133,7 +144,7 @@ class Charactor_(ABC, Generic[C_]):
         pass
 
     @abstractmethod
-    def useSkill(self, skill):
+    def setThisTurnSkill(self, skill):
         pass
 
 
@@ -213,7 +224,7 @@ class Attacker(Charactor):
     def oneHitKill(self, target: Charactor):
         target.receveDamage(target.status.hp)
 
-    def weakAttack(self):
+    def weakAttack(self,target):
         # TODO:弱い攻撃の実装
         pass
 
@@ -270,7 +281,9 @@ class Healer(Charactor):
             ],
         ]
 
+    # TODO:show my skills
     def buffHeal(self, target: Charactor):
+        
         target.receveBuff(self.powerfulRecoveryPower)
         self.receveDeBuff(self.selfDeBuff, 1)
         pass
@@ -292,4 +305,11 @@ class Healer(Charactor):
 
 
 if __name__ == "__main__":
-    SkillStatus("aaa", "bbb", 0, 0, -1, True).nextTurn()
+    # SkillStatus("aaa", "bbb", 0, 0, -1, True).nextTurn()
+    cs=CharactorStatus(10,10,10,10)
+    q1=CharactorStatus(20,20,20,20)
+    q2=CharactorStatus(20,20,-5,20)
+    cs.addStatus(q1,-1)
+    cs.addStatus(q2,-1)
+    print(cs)
+    print(cs.sum())
