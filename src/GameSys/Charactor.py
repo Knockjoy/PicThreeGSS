@@ -6,7 +6,7 @@
 #
 # Charactor.pyではキャラクターの定義に関するプログラムを書いていきます。
 
-# TODO:型指定修正！list->tuple
+# TODO:型指定修正！list->tuple!Union廃止
 
 from abc import *
 from dataclasses import dataclass, field
