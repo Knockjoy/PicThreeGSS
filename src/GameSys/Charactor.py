@@ -169,6 +169,8 @@ class Charactor_(ABC, Generic[C_]):
 class Charactor(Charactor_):
     def __init__(self, status, role):
         super().__init__(status, role)
+        self.thisTurnSkill:List[List[List[SkillStatus, Callable], C]]=[]
+        self.skills:List[List[SkillStatus, Callable]]=[]
 
     def nomalAttack(self, target: C):
         return super().nomalAttack(target)
@@ -185,6 +187,35 @@ class Charactor(Charactor_):
     def receveMaind(self):
         # TODO:どうやって技を実装するか
         pass
+    def execSkill(self):
+        if self.thisTurnSkill == []:
+            raise GameException.NoselectedSkill()
+        if (
+            self.thisTurnSkill[0][0].nowlooktime != 0
+            and self.thisTurnSkill[0][0].usetimes == 0
+        ):
+            raise GameException.DontUseSkill()
+        self.thisTurnSkill[0][1](self.thisTurnSkill[1])  # 技を実行
+        self.thisTurnSkill[0][0].useSkill()  # 技ステータスに反映
+        self.thisTurnSkill = []  # 初期化
+        
+    def setThisTurnSkill(self, skill:List[SkillStatus, Callable], target:C=None):
+        # リセレクト禁止
+        if self.thisTurnSkill != []:
+            raise GameException.DontReselect()
+        # スキルが選択されていないとき
+        if skill == [] and skill == None:
+            raise GameException.NoselectedSkill()
+
+        skill_status: SkillStatus = skill[0]
+
+        # 対象がいないとき
+        if skill_status.target_exist and target == None:
+            raise GameException.NotSelectedTarget()
+        self.thisTurnSkill: List[List[List[SkillStatus, Callable], C]] = [
+            skill,
+            target,
+        ]
 
 
 # Attackerの設定
@@ -219,7 +250,8 @@ class Attacker(Charactor):
         self.strongAttackmsg = "強い攻撃がヒット！！"
         self.weakattackmsg = "攻撃を与えた！"
         self.missSkill = "攻撃を外した。。。"
-        self.skills: List[Union[SkillStatus, Callable]] = [
+        self.thisTurnSkill=[]
+        self.skills= [
             [
                 SkillStatus("strongAttack", "強い攻撃", 3, 0, -1, True),
                 self.strongAttack,
@@ -257,36 +289,10 @@ class Attacker(Charactor):
             i[0].nextTrun()
 
     def execSkill(self):
-        if self.thisTurnSkill == []:
-            raise GameException.NoselectedSkill()
-        if (
-            self.thisTurnSkill[0][0].nowlooktime != 0
-            and self.thisTurnSkill[0][0].usetimes == 0
-        ):
-            raise GameException.DontUseSkill()
-        self.thisTurnSkill[0][1](self.thisTurnSkill[1])  # 技を実行
-        self.thisTurnSkill[0][0].useSkill()  # 技ステータスに反映
-        self.thisTurnSkill = []  # 初期化
-
+        return super().execSkill()
+    
     def setThisTurnSkill(self, skill, target=None):
-        # リセレクト禁止
-        if self.thisTurnSkill != []:
-            raise GameException.DontReselect()
-        # スキルが選択されていないとき
-        if skill == [] and skill == None:
-            raise GameException.NoselectedSkill()
-
-        skill_status: SkillStatus = skill[0]
-
-        # 対象がいないとき
-        if skill_status.target_exist and target == None:
-            raise GameException.NotSelectedTarget()
-
-        self.thisTurnSkill: List[Union[List[SkillStatus, Callable], Charactor]] = [
-            skill,
-            target,
-        ]
-
+        return super().setThisTurnSkill(skill, target)
 
 class Healer(Charactor):
     def __init__(
@@ -344,37 +350,15 @@ class Healer(Charactor):
             i[0].nextTrun()
 
     def setThisTurnSkill(self, skill, target=None):
-        # リセレクト禁止
-        if self.thisTurnSkill != []:
-            raise GameException.DontReselect()
-        # スキルが選択されていないとき
-        if skill == [] and skill == None:
-            raise GameException.NoselectedSkill()
-
-        skill_status: SkillStatus = skill[0]
-
-        # 対象がいないとき
-        if skill_status.target_exist and target == None:
-            raise GameException.NotSelectedTarget()
-
-        self.thisTurnSkill: List[Union[List[SkillStatus, Callable], Charactor]] = [
-            skill,
-            target,
-        ]
+        return super().setThisTurnSkill(skill, target)
 
     def execSkill(self):
-        if self.thisTurnSkill == []:
-            raise GameException.NoselectedSkill()
-        if (
-            self.thisTurnSkill[0][0].nowlooktime != 0
-            and self.thisTurnSkill[0][0].usetimes == 0
-        ):
-            raise GameException.DontUseSkill()
-        self.thisTurnSkill[0][1](self.thisTurnSkill[1])  # 技を実行
-        self.thisTurnSkill[0][0].useSkill()  # 技ステータスに反映
-        self.thisTurnSkill = []  # 初期化
+        return super().execSkill()
 
-
+class Guard(Charactor):
+    def __init__(self, status:CharactorStatus, role:RoleStatus):
+        super().__init__(status, role)
+        
 if __name__ == "__main__":
     # SkillStatus("aaa", "bbb", 0, 0, -1, True).nextTurn()
     cs = CharactorStatus(10, 10, 10, 10)
