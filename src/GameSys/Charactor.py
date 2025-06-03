@@ -6,6 +6,8 @@
 #
 # Charactor.pyではキャラクターの定義に関するプログラムを書いていきます。
 
+# TODO:型指定修正！list->tuple
+
 from abc import *
 from dataclasses import dataclass, field
 from typing import Generic, TypeVar, List, Union, Callable
