@@ -6,7 +6,6 @@
 #
 # Charactor.pyではキャラクターの定義に関するプログラムを書いていきます。
 
-# TODO:型指定修正！list->tuple!Union廃止
 
 from abc import *
 from dataclasses import dataclass, field
@@ -26,7 +25,7 @@ class CharactorStatus(Generic[S]):
     attack: float
     defence: float
     speed: float
-    queue: List[Union[S, int]] = field(default_factory=list)
+    queue: List[tuple[S, int]] = field(default_factory=list)
 
     def __add__(self, status: S):
         self.hp += status.hp
@@ -171,8 +170,8 @@ class Charactor_(ABC, Generic[C_]):
 class Charactor(Charactor_):
     def __init__(self, status, role):
         super().__init__(status, role)
-        self.thisTurnSkill:List[List[List[SkillStatus, Callable], C]]=[]
-        self.skills:List[List[SkillStatus, Callable]]=[]
+        self.thisTurnSkill:List[tuple[tuple[SkillStatus, Callable], C]]=[]
+        self.skills:List[tuple[SkillStatus, Callable]]=[]
 
     def nomalAttack(self, target: C):
         return super().nomalAttack(target)
@@ -201,7 +200,7 @@ class Charactor(Charactor_):
         self.thisTurnSkill[0][0].useSkill()  # 技ステータスに反映
         self.thisTurnSkill = []  # 初期化
         
-    def setThisTurnSkill(self, skill:List[SkillStatus, Callable], target:C=None):
+    def setThisTurnSkill(self, skill:tuple[SkillStatus, Callable], target:C=None):
         # リセレクト禁止
         if self.thisTurnSkill != []:
             raise GameException.DontReselect()
@@ -214,7 +213,7 @@ class Charactor(Charactor_):
         # 対象がいないとき
         if skill_status.target_exist and target == None:
             raise GameException.NotSelectedTarget()
-        self.thisTurnSkill: List[List[List[SkillStatus, Callable], C]] = [
+        self.thisTurnSkill= [
             skill,
             target,
         ]
