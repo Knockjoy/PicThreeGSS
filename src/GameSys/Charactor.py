@@ -167,7 +167,7 @@ class Charactor_(ABC, Generic[C_]):
 
 
 # Charactorの実装
-class Charactor(Charactor_):
+class Charactor(Charactor_,Generic[C]):
     def __init__(self, status, role):
         super().__init__(status, role)
         self.thisTurnSkill:List[tuple[tuple[SkillStatus, Callable], C]]=[]
@@ -188,6 +188,12 @@ class Charactor(Charactor_):
     def receveMaind(self):
         # TODO:どうやって技を実装するか
         pass
+    
+
+    def nextTurn(self):
+        for i in self.skills[0]:
+            i[0].nextTrun()
+
     def execSkill(self):
         if self.thisTurnSkill == []:
             raise GameException.NoselectedSkill()
@@ -199,6 +205,7 @@ class Charactor(Charactor_):
         self.thisTurnSkill[0][1](self.thisTurnSkill[1])  # 技を実行
         self.thisTurnSkill[0][0].useSkill()  # 技ステータスに反映
         self.thisTurnSkill = []  # 初期化
+        self.nextTurn()
         
     def setThisTurnSkill(self, skill:tuple[SkillStatus, Callable], target:C=None):
         # リセレクト禁止
@@ -285,10 +292,6 @@ class Attacker(Charactor):
         target.receveDamage(self.status.attack)
         return self.weakattackmsg
 
-    def nextTurn(self):
-        for i in self.skills[0]:
-            i[0].nextTrun()
-
     def execSkill(self):
         return super().execSkill()
     
@@ -346,9 +349,6 @@ class Healer(Charactor):
         target.receveBuff(CharactorStatus(self.recoveryPower, 0, 0, 0), -1)
         pass
 
-    def nextTurn(self):
-        for i in self.skills[0]:
-            i[0].nextTrun()
 
     def setThisTurnSkill(self, skill, target=None):
         return super().setThisTurnSkill(skill, target)
