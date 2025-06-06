@@ -49,14 +49,6 @@ class Battle1v1:
 
         return result
 
-    def nextturn(self):
-        # カードの待ちターン処理
-        for i in self.p1.cards:
-            i.nextTrun()
-        for j in self.p2.cards:
-            j.nextTrun()
-        pass
-
     def _check_exception(self):
         # TODO:例外を投げずにreturnし、APIを発行
         pass

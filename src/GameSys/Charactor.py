@@ -123,11 +123,9 @@ class Charactor_(ABC, Generic[C_]):
         self.role = Role
 
     # 通常攻撃
-    def nomalAttack(
-        self,
-        target: C_,
-    ):
-        target.status.hp -= self.status.attack
+    @abstractmethod
+    def nomalAttack(self, target: C):
+        pass
 
     # ダメージを受けたとき
     @abstractmethod
@@ -146,7 +144,7 @@ class Charactor_(ABC, Generic[C_]):
 
     # マインドコントロールを受けたとき
     @abstractmethod
-    def receveMaind(
+    def receveMind(
         self,
     ):
         pass
@@ -167,14 +165,17 @@ class Charactor_(ABC, Generic[C_]):
 
 
 # Charactorの実装
-class Charactor(Charactor_):
+class Charactor(Charactor_, Generic[C]):
     def __init__(self, status, role):
         super().__init__(status, role)
-        self.thisTurnSkill:List[tuple[tuple[SkillStatus, Callable], C]]=[]
-        self.skills:List[tuple[SkillStatus, Callable]]=[]
+        self.thisTurnSkill: List[tuple[tuple[SkillStatus, Callable], C]] = []
+        self.skills: List[tuple[SkillStatus, Callable]] = [
+            [SkillStatus("normalAttack", "通常攻撃", 0, 0, -1, True), self.normalAttack]
+        ]
+        self.mindControledQueue: List[tuple[tuple[SkillStatus, Callable], C]] = []
 
-    def nomalAttack(self, target: C):
-        return super().nomalAttack(target)
+    def normalAttack(self, target: C):
+        target.status.hp -= self.status.attack
 
     def receveDamage(self, damage: float) -> None:
         self.status.hp -= damage
@@ -185,10 +186,45 @@ class Charactor(Charactor_):
     def receveDeBuff(self, DeBuff: CharactorStatus, lifetime: int = -1):
         self.status.addStatus(DeBuff, lifetime)
 
-    def receveMaind(self):
+    def receveMind(self, skill: tuple[SkillStatus, Callable], target: C = None):
         # TODO:どうやって技を実装するか
-        pass
+        # スキルが選択されていないとき
+        if skill == [] and skill == None:
+            raise GameException.NoselectedSkill()
+
+        skill_status: SkillStatus = skill[0]
+
+        # 対象がいないとき
+        if skill_status.target_exist and target == None:
+            raise GameException.NotSelectedTarget()
+        self.mindControledQueue.append(
+            [
+                skill,
+                target,
+            ]
+        )
+
+        # INFO:マジシャンの実装でパーセンテージを作る
+
+    def nextTurn(self):
+        for i in self.skills[0]:
+            i[0].nextTrun()
+
     def execSkill(self):
+        resultmsg = "none"
+        if self.mindControledQueue != []:
+            resultmsg: list = []
+            for i in self.mindControledQueue:
+                # TODO:mindcontrolされるときの処理
+                # マインドコントロールが成功したとき
+                resultmsg.append(i[0][1](i[1]))  # 技を実行
+                i[0][0].useSkill()  # 技ステータスに反映
+
+            self.mindControledQueue = []  # 初期化
+
+            self.nextTurn()
+            return f"minded:{resultmsg}"
+
         if self.thisTurnSkill == []:
             raise GameException.NoselectedSkill()
         if (
@@ -196,11 +232,13 @@ class Charactor(Charactor_):
             and self.thisTurnSkill[0][0].usetimes == 0
         ):
             raise GameException.DontUseSkill()
-        self.thisTurnSkill[0][1](self.thisTurnSkill[1])  # 技を実行
+        resultmsg = self.thisTurnSkill[0][1](self.thisTurnSkill[1])  # 技を実行
         self.thisTurnSkill[0][0].useSkill()  # 技ステータスに反映
         self.thisTurnSkill = []  # 初期化
-        
-    def setThisTurnSkill(self, skill:tuple[SkillStatus, Callable], target:C=None):
+        self.nextTurn()
+        return resultmsg
+
+    def setThisTurnSkill(self, skill: tuple[SkillStatus, Callable], target: C = None):
         # リセレクト禁止
         if self.thisTurnSkill != []:
             raise GameException.DontReselect()
@@ -213,7 +251,7 @@ class Charactor(Charactor_):
         # 対象がいないとき
         if skill_status.target_exist and target == None:
             raise GameException.NotSelectedTarget()
-        self.thisTurnSkill= [
+        self.thisTurnSkill = [
             skill,
             target,
         ]
@@ -251,14 +289,16 @@ class Attacker(Charactor):
         self.strongAttackmsg = "強い攻撃がヒット！！"
         self.weakattackmsg = "攻撃を与えた！"
         self.missSkill = "攻撃を外した。。。"
-        self.thisTurnSkill=[]
-        self.skills= [
+        self.thisTurnSkill = []
+        self.skills.append(
             [
                 SkillStatus("strongAttack", "強い攻撃", 3, 0, -1, True),
                 self.strongAttack,
-            ],
+            ]
+        )
+        self.skills.append(
             [SkillStatus("normalAttack", "弱い攻撃", 0, 0, -1, True), self.weakAttack],
-        ]
+        )
 
     def strongAttack(self, target: Charactor) -> None:
         """
@@ -285,15 +325,6 @@ class Attacker(Charactor):
         target.receveDamage(self.status.attack)
         return self.weakattackmsg
 
-    def nextTurn(self):
-        for i in self.skills[0]:
-            i[0].nextTrun()
-
-    def execSkill(self):
-        return super().execSkill()
-    
-    def setThisTurnSkill(self, skill, target=None):
-        return super().setThisTurnSkill(skill, target)
 
 class Healer(Charactor):
     def __init__(
@@ -317,7 +348,7 @@ class Healer(Charactor):
         self.powerfulRecoveryPower = powerfulBuff
         self.selfDeBuff = selfDeBuff
         self.thisTurnSkill = []
-        self.skills = [
+        self.skills.append(
             [
                 SkillStatus(
                     name="buffAndHeal",
@@ -326,14 +357,16 @@ class Healer(Charactor):
                     nowlooktime=0,
                 ),
                 self.buffHeal,
-            ],
+            ]
+        )
+        self.skills.append(
             [
                 SkillStatus(
                     name="normalHeal", nickname="通常回復", lookturn=0, nowlooktime=0
                 ),
                 self.normalHeal,
-            ],
-        ]
+            ]
+        )
 
     # TODO:show my skills
     def buffHeal(self, target: Charactor):
@@ -346,20 +379,42 @@ class Healer(Charactor):
         target.receveBuff(CharactorStatus(self.recoveryPower, 0, 0, 0), -1)
         pass
 
-    def nextTurn(self):
-        for i in self.skills[0]:
-            i[0].nextTrun()
-
-    def setThisTurnSkill(self, skill, target=None):
-        return super().setThisTurnSkill(skill, target)
-
-    def execSkill(self):
-        return super().execSkill()
 
 class Guard(Charactor):
-    def __init__(self, status:CharactorStatus, role:RoleStatus):
+    def __init__(self, status: CharactorStatus, role: RoleStatus):
         super().__init__(status, role)
-        
+
+
+class Speeder(Charactor):
+    def __init__(self, status, role):
+        super().__init__(status, role)
+
+
+class Magician(Charactor):
+    def __init__(self, status, role):
+        super().__init__(status, role)
+        self.mindControlmsg = "マインドコントロール"
+        self.unmindControle = "マインドコントロールにしっぱい"
+
+        self.skills.append(
+            [
+                SkillStatus("mindControl", "マインドコントロール", 0, 0, 3, True),
+                self.mindControl,
+            ]
+        )
+
+    def mindControl(
+        self,
+        target: Charactor,
+        targetSkill: tuple[SkillStatus, Callable],
+        SkillTarget: Charactor,
+    ):
+        if random.random() <= 0.5:
+            target.receveMind(targetSkill, SkillTarget)
+            return self.mindControlmsg
+        return self.unmindControle
+
+
 if __name__ == "__main__":
     # SkillStatus("aaa", "bbb", 0, 0, -1, True).nextTurn()
     cs = CharactorStatus(10, 10, 10, 10)
