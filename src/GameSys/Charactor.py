@@ -124,7 +124,7 @@ class Charactor_(ABC, Generic[C_]):
 
     # 通常攻撃
     @abstractmethod
-    def nomalAttack(self, target: C):
+    def normalAttack(self, target: C):
         pass
 
     # ダメージを受けたとき
