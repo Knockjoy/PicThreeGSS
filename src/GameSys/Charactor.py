@@ -348,7 +348,7 @@ class Healer(Charactor):
         self.powerfulRecoveryPower = powerfulBuff
         self.selfDeBuff = selfDeBuff
         self.thisTurnSkill = []
-        self.skills = [
+        self.skills.append(
             [
                 SkillStatus(
                     name="buffAndHeal",
@@ -357,14 +357,16 @@ class Healer(Charactor):
                     nowlooktime=0,
                 ),
                 self.buffHeal,
-            ],
+            ]
+        )
+        self.skills.append(
             [
                 SkillStatus(
                     name="normalHeal", nickname="通常回復", lookturn=0, nowlooktime=0
                 ),
                 self.normalHeal,
-            ],
-        ]
+            ]
+        )
 
     # TODO:show my skills
     def buffHeal(self, target: Charactor):
@@ -376,7 +378,6 @@ class Healer(Charactor):
     def normalHeal(self, target: Charactor):
         target.receveBuff(CharactorStatus(self.recoveryPower, 0, 0, 0), -1)
         pass
-
 
 
 class Guard(Charactor):
@@ -392,6 +393,26 @@ class Speeder(Charactor):
 class Magician(Charactor):
     def __init__(self, status, role):
         super().__init__(status, role)
+        self.mindControlmsg = "マインドコントロール"
+        self.unmindControle = "マインドコントロールにしっぱい"
+
+        self.skills.append(
+            [
+                SkillStatus("mindControl", "マインドコントロール", 0, 0, 3, True),
+                self.mindControl,
+            ]
+        )
+
+    def mindControl(
+        self,
+        target: Charactor,
+        targetSkill: tuple[SkillStatus, Callable],
+        SkillTarget: Charactor,
+    ):
+        if random.random() <= 0.5:
+            target.receveMind(targetSkill, SkillTarget)
+            return self.mindControlmsg
+        return self.unmindControle
 
 
 if __name__ == "__main__":
