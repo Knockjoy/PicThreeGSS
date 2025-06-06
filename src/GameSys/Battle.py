@@ -63,26 +63,35 @@ class Battle1v1:
 
 
 if __name__ == "__main__":
+
     my1 = Attacker(
-        CharactorStatus(10, 1, 2, 3), RoleStatus("attacker", "pipi"), 10, 15, 20
+        CharactorStatus(hp=10, attack=1, defence=2, speed=3),
+        RoleStatus("attacker", "pipi"),
+        storngPower=10,
+        strongHitPr=15,
+        oneHitKillPr=20,
     )
     my2 = Healer(
-        CharactorStatus(10, 0, 10, 10),
+        CharactorStatus(hp=10, attack=0, defence=10, speed=10),
         RoleStatus("healer", "qiqi"),
         10,
-        CharactorStatus(10, 10, 10, 10),
+        CharactorStatus(hp=10, attack=10, defence=10, speed=10),
         CharactorStatus(-10, 0, 0, 0),
     )
     my = Player("yuki", [my1, my2])
     you1 = Attacker(
-        CharactorStatus(10, 1, 2, 3), RoleStatus("attacker", "pipi"), 10, 15, 20
+        CharactorStatus(hp=10, attack=1, defence=2, speed=3),
+        RoleStatus("attacker", "pipi"),
+        10,
+        15,
+        20,
     )
     you2 = Healer(
-        CharactorStatus(10, 0, 10, 10),
+        CharactorStatus(hp=10, attack=0, defence=10, speed=10),
         RoleStatus("healer", "qiqi"),
         10,
-        CharactorStatus(10, 10, 10, 10),
-        CharactorStatus(-10, 0, 0, 0),
+        CharactorStatus(hp=10, attack=10, defence=10, speed=10),
+        CharactorStatus(hp=-10, attack=0, defence=0, speed=0),
     )
     you = Player("yuki", [you1, you2])
     bt = Battle1v1(my, you)
