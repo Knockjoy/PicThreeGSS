@@ -57,7 +57,7 @@ class Battle1v1:
 if __name__ == "__main__":
 
     my1 = Attacker(
-        CharactorStatus(hp=10, attack=1, defence=2, speed=3,queue=[]),
+        CharactorStatus(hp=10, attack=1, defence=2, speed=3),
         RoleStatus("attacker", "pipi"),
         storngPower=10,
         strongHitPr=15,
