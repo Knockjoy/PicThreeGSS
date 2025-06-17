@@ -4,7 +4,7 @@ import uvicorn
 from fastapi import FastAPI
 # from starlette.middleware.cors import CORSMiddleware
 from fastapi.middleware.cors import CORSMiddleware
-import socketio
+from fastapi import WebSocket,WebSocketDisconnect
 
 app =FastAPI()
 app.add_middleware(
@@ -14,9 +14,6 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "X-CSRF-Token", "Access-Control-Allow-Origin"]
 )
-sio=socketio.AsyncServer(cors_allow_origins='*',async_mode='asgi')
-socket_app=socketio.ASGIApp(sio)
-app.mount("/connect",socket_app)
 
 @app.get("/")
 async def root():
@@ -31,14 +28,16 @@ async def uploadfile():
     
     pass
 
-@sio.on("connect")
-async def connect(sid,env):
-    print(f"New Client Connected to this is : {str(sid)}")
-    await sio.emit("send_msg", "Hello from Server")
-
-@sio.on("disconnect")
-async def disconnect(sid):
-    print(f"Client Disconnect: {str(sid)}")
+@app.websocket("/ws")
+async def websocket_endpoint(websocket:WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            data=await websocket.receive_text()
+            print(data)
+            await websocket.send_text(f"your msg is {data}")
+    except WebSocketDisconnect:
+        websocket.close()
 
 
 if __name__=="__main__":
