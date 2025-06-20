@@ -5,6 +5,8 @@ from fastapi import FastAPI
 # from starlette.middleware.cors import CORSMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import WebSocket,WebSocketDisconnect
+from typing import List
+
 
 app =FastAPI()
 app.add_middleware(
@@ -14,6 +16,9 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "X-CSRF-Token", "Access-Control-Allow-Origin"]
 )
+
+# TODO:List[Battle]
+BattleMatchs:List=[]
 
 @app.get("/")
 async def root():
@@ -39,6 +44,14 @@ async def websocket_endpoint(websocket:WebSocket):
     except WebSocketDisconnect:
         websocket.close()
 
+async def GameRouter(routeCommand,data):
+    if routeCommand=="battle_in":
+        pass
+    pass
+
+async def MatchManager():
+    
+    pass
 
 if __name__=="__main__":
     uvicorn.run("main:app",host="localhost",port=19009,lifespan="on",reload=True)
