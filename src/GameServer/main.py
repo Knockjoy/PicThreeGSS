@@ -45,8 +45,10 @@ async def websocket_endpoint(websocket:WebSocket):
         websocket.close()
 
 async def GameRouter(routeCommand,data):
+    
     if routeCommand=="battle_in":
         pass
+    
     pass
 
 async def MatchManager():

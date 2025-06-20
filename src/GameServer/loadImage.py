@@ -1,6 +1,6 @@
 import sqlite3
 
-imgDB = "PicThreeGSS/src/GameServer/db/images.db"
+imgDB = "src/GameServer/db/images.db"
 
 
 def wakeup():
@@ -23,11 +23,12 @@ def wakeup():
 
 
 def saveImg(userId, userName, img):
+    
     db = sqlite3.connect(imgDB)
 
     cursor = db.cursor()
     try:
-        cursor.execute("INSERT INTO images(userid,username,imgid) VALUES (?,?,?)",(-1,"yuki","6e9f01"))
+        cursor.execute("INSERT INTO images(userid,username,imgid) VALUES (?,?,?)",(userId,userName,img))
         db.commit()
     except sqlite3.Error as e:
         print(f"An Error occurred {e}")
@@ -39,3 +40,4 @@ def saveImg(userId, userName, img):
 
 if __name__=="__main__":
     wakeup()
+    saveImg(-1,"yuki","6e9f01")
