@@ -1,3 +1,5 @@
 fastapi
 uvicorn
 python-socketio
+pillow
+opencv-python

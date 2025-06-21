@@ -6,7 +6,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import WebSocket,WebSocketDisconnect
 from typing import List
-
+import json
+from loadImage import *
+import base64
+from io import BytesIO
+from PIL import Image
 
 app =FastAPI()
 app.add_middleware(
@@ -33,14 +37,32 @@ async def uploadfile():
     
     pass
 
+userids:int=0
+
+def createid():
+    global userids
+    userids+=1
+    return userids
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket:WebSocket):
     await websocket.accept()
     try:
         while True:
-            data=await websocket.receive_text()
+            data=await websocket.receive_json()
+            status=data["status"]
             print(data)
-            await websocket.send_text(f"your msg is {data}")
+            if(status=="::connect::"):
+                await websocket.send_json({"status":"firstConnect","userid":createid()})
+            if(status=="usersetup"):
+                pass
+            if(status=="createCard"):
+                sketch= Image.open(BytesIO(base64.b64decode(data["sketch"].split(",")[1])))
+                userid=data["userID"]
+                imgid=await saveImg(userid,sketch)
+                
+                pass
+            # await websocket.send_text(f"your msg is {data}")
     except WebSocketDisconnect:
         websocket.close()
 
@@ -56,5 +78,6 @@ async def MatchManager():
     pass
 
 if __name__=="__main__":
+    wakeupDB()
     uvicorn.run("main:app",host="localhost",port=19009,lifespan="on",reload=True)
     pass
