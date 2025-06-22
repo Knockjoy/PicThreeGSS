@@ -1,16 +1,23 @@
 # copyright (c) 2025 Yuuki Furuta
 
+import sys
+import json
+import base64
+from io import BytesIO
+
+from PIL import Image
 import uvicorn
 from fastapi import FastAPI
-# from starlette.middleware.cors import CORSMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import WebSocket,WebSocketDisconnect
 from typing import List
-import json
+# add import path
+sys.path.append("/root/picthree/PicThreeGSS/src/GameServer")
+sys.path.append("/root/picthree/PicThreeAI/src/AI")
+sys.path.append("/root/picthree/PicThreeGSS/src/GameSys")
 from loadImage import *
-import base64
-from io import BytesIO
-from PIL import Image
+import RoleAnalyze
+import StatusAnalyze
 
 connectionID:int=0
 cardid:int=0
@@ -62,16 +69,22 @@ async def websocket_endpoint(websocket:WebSocket):
             if(status=="createCard"):
                 sketch= Image.open(BytesIO(base64.b64decode(data["sketch"].split(",")[1])))
                 userid=data["userID"]
+                charaname=data["charaname"]
                 imgid=await saveImg(userid,sketch)
-                
-                pass
+                imgpath=f"/root/picthree/PicThreeGSS/src/GameServer/db/imgs/sketch{imgid}.png"
+                role=RoleAnalyze.analyze(imgpath)
+                if role=="attack":role=0
+                if role=="guard":role=1
+                if role=="healer":role=2
+                if role=="speeder":role=3
+                if role=="magician":role=4
+                hp,attack,defence,speed=StatusAnalyze.analyze(imgpath)
+                cardid=createCard(userid,imgid,charaname,role,hp,attack,defence,speed)
+                print((userid,imgid,charaname,role,hp,attack,defence,speed))
+                await websocket.send_json({"status":"cardCreated","careteStatus":"success","cardid":cardid})
             # await websocket.send_text(f"your msg is {data}")
     except WebSocketDisconnect:
         websocket.close()
-
-async def createCard():
-    
-    pass
 
 async def GameRouter(routeCommand,data):
     
@@ -85,6 +98,7 @@ async def MatchManager():
     pass
 
 if __name__=="__main__":
+    print(RoleAnalyze.analyze("/root/picthree/PicThreeAI/Apple.png"))
     wakeupDB()
     uvicorn.run("main:app",host="localhost",port=19009,lifespan="on",reload=True)
     pass

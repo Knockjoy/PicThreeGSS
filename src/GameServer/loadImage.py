@@ -2,7 +2,7 @@ import sqlite3
 from PIL import Image
 import datetime
 
-imgDB = "src/GameServer/db/SketchCardBattle.db"
+imgDB = "/root/picthree/PicThreeGSS/src/GameServer/db/SketchCardBattle.db"
 
 
 def wakeupDB():
@@ -33,10 +33,10 @@ def wakeupDB():
         CREATE TABLE IF NOT EXISTS cards(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             userid INTEGER NOT NULL,
-            cardid TEXT NOT NULL,
+            cardid INTEGER NOT NULL,
             imgid INTEGER NOT NULL,
-            charactername TEXT NOT NULL,
-            typeid INTEGER NOT NULL,
+            charaname TEXT NOT NULL,
+            typeid TEXT NOT NULL,
             hp INTEGER NOT NULL,
             attack INTEGER NOT NULL,
             defence INTEGER NOT NUll,
@@ -50,26 +50,48 @@ def wakeupDB():
     pass
 
 
+def createCard(userId, ImgId, charaName, role, hp, attack, defence, speed):
+
+    db = sqlite3.connect(imgDB)
+    cursor = db.cursor()
+    tdate = datetime.date.today()
+    dataid = tdate.strftime("%Y%m%d%H%M%S")
+    try:
+        cursor.execute("SELECT COUNT(id) from cards")
+        res=cursor.fetchall()
+        num=res[0][0]
+        cursor.execute(
+            "INSERT INTO cards(userid,cardid,imgid,charaname,typeid,hp,attack,defence,speed) VALUES (?,?,?,?,?,?,?,?,?)",
+            (userId, dataid + str(num),ImgId,charaName,role,hp,attack,defence,speed),
+        )
+        db.commit()
+        
+        return dataid + str(num)
+    except sqlite3.Error as e:
+        print(f"An Error occurred {e}")
+        db.rollback()
+    db.close()
+
+
 async def saveImg(userId, img: Image):
 
     db = sqlite3.connect(imgDB)
-
     cursor = db.cursor()
+    tdate = datetime.date.today()
+    dataid = tdate.strftime("%Y%m%d%H%M%S")
     try:
-        tdate = datetime.date.today()
         cursor.execute("SELECT COUNT(id) from images")
         res = cursor.fetchall()
         num = res[0][0] + 1
         cursor.execute(
             "INSERT INTO images(userid,imgid) VALUES (?,?)",
-            (userId, tdate.strftime("%Y%m%d%H%M%S") + str(num)),
+            (userId, dataid + str(num)),
         )
         db.commit()
-        img.save(
-            f"src/GameServer/db/imgs/sketch{tdate.strftime("%Y%m%d%H%M%S")}{num}.png"
-        )
+        # TODO:path管理
+        img.save(f"/root/picthree/PicThreeGSS/src/GameServer/db/imgs/sketch{dataid}{num}.png")
 
-        return tdate.strftime("%Y%m%d%H%M%S") + str(num)
+        return dataid + str(num)
     except sqlite3.Error as e:
         print(f"An Error occurred {e}")
         db.rollback()
