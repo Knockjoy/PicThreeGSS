@@ -1,0 +1,165 @@
+{
+  "Attacker": {
+    "image": "Aggression, front-line, speed and power",
+    "shape_keywords": [
+      "Sharp",
+      "Pointed",
+      "Flame",
+      "Blade",
+      "Arrow"
+    ],
+    "associated_words": [
+      "Sword",
+      "Axe",
+      "Spear",
+      "Claw",
+      "Fang",
+      "Red",
+      "Orange",
+      "Black",
+      "Combo attack",
+      "Critical strike",
+      "Berserk",
+      "Rush",
+      "Fire",
+      "Lightning",
+      "Explosion",
+      "Blade",
+      "Blood",
+      "Aura",
+      "Muscle",
+      "Whirlwind",
+      "Drill",
+      "Bow & Arrow"
+    ]
+  },
+  "Healer": {
+    "image": "Healing, support, recovery, holiness",
+    "shape_keywords": [
+      "Soft",
+      "Rounded",
+      "Light",
+      "Feather",
+      "Droplet"
+    ],
+    "associated_words": [
+      "Staff",
+      "Holy water",
+      "Flower",
+      "Herbs",
+      "Angel wings",
+      "Green",
+      "White",
+      "Light blue",
+      "Pink",
+      "Light",
+      "Regeneration",
+      "Prayer",
+      "Blessing",
+      "Spell",
+      "Bell",
+      "Orb",
+      "Heart",
+      "Gentle glow",
+      "Crystal",
+      "Petals",
+      "Pastel colors"
+    ]
+  },
+  "Guard": {
+    "image": "Defense, shield, endurance, protector",
+    "shape_keywords": [
+      "Square",
+      "Thick",
+      "Solid",
+      "Rock",
+      "Metal"
+    ],
+    "associated_words": [
+      "Shield",
+      "Armor",
+      "Wall",
+      "Fortress",
+      "Stone",
+      "Blue",
+      "Gray",
+      "Brown",
+      "Black",
+      "Immovable",
+      "Endure",
+      "Cover",
+      "Provoke",
+      "Iron wall",
+      "Stronghold",
+      "Earth",
+      "Tank",
+      "Golem",
+      "Plated armor",
+      "Barrier",
+      "Dome"
+    ]
+  },
+  "Speeder": {
+    "image": "Agility, mobility, high speed, evasion",
+    "shape_keywords": [
+      "Slim",
+      "Aerodynamic",
+      "Wings",
+      "Lightning"
+    ],
+    "associated_words": [
+      "Blade",
+      "Sneakers",
+      "Hover",
+      "Booster",
+      "Blue",
+      "Purple",
+      "Silver",
+      "Wind",
+      "Shadow",
+      "Teleport",
+      "Sonic",
+      "Dual blades",
+      "Step",
+      "Dash",
+      "Slide",
+      "Smoke",
+      "Arrow",
+      "Windmill",
+      "Swirl"
+    ]
+  },
+  "Magician": {
+    "image": "Magic, wisdom, mystery, long range",
+    "shape_keywords": [
+      "Spiral",
+      "Staff",
+      "Star",
+      "Smoke",
+      "Circle"
+    ],
+    "associated_words": [
+      "Staff",
+      "Grimoire",
+      "Crystal",
+      "Magic circle",
+      "Purple",
+      "Indigo",
+      "Gold",
+      "White",
+      "Darkness",
+      "Light",
+      "Illusion",
+      "Time-space",
+      "Elements",
+      "Chant",
+      "Spell",
+      "Summon",
+      "Transformation",
+      "Hood",
+      "Floating",
+      "Tarot",
+      "Stardust"
+    ]
+  }
+}

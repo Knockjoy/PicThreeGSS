@@ -1,0 +1,77 @@
+{
+  "Attacker": {
+    "image": "Aggression, front-line, speed and power",
+    "shape_keywords": ["Sharp", "Pointed", "Flame", "Blade", "Arrow"],
+    "associated_words": [
+      "Sword", "Axe", "Spear", "Claw", "Fang", "Dagger", "Mace", "Gun", "Cannon", "Bomb",
+      "Red", "Orange", "Black", "Crimson", "Scarlet", "Dark flame", "Lava", "Burn", "Flame edge", "Blazing fist",
+      "Combo attack", "Critical strike", "Berserk", "Rush", "Slash", "Pierce", "Blitz", "Flurry", "Blade rain", "Double strike",
+      "Fire", "Lightning", "Explosion", "Detonation", "Eruption", "Spark", "Scorch", "Ignite", "Flash burn", "Shock burst",
+      "Blood", "Wound", "Strike", "Thrust", "Break", "Howl", "Impact", "Punch", "Roar", "Rampage",
+      "Frenzy", "Assault", "Lunge", "Overdrive", "Violence", "Kill", "Destruction", "Blade storm", "Uppercut", "Power spike",
+      "Dual blades", "Rage", "Adrenaline", "Backstab", "Meteor strike", "Warcry", "Cross slash", "Spin attack", "Execution", "Quick shot",
+      "Savage hit", "Charge shot", "Twin strike", "Vortex blade", "Thunder crash", "Flame strike", "Scythe", "Death blow", "Burst hit", "Breakthrough",
+      "Snipe", "Overpower", "Rapid slash", "Demolish", "Wild swing", "Chain combo", "Finisher", "Power burst", "Blazing slash", "Overkill"
+    ]
+  },
+  "Healer": {
+    "image": "Healing, support, recovery, holiness",
+    "shape_keywords": ["Soft", "Rounded", "Light", "Feather", "Droplet"],
+    "associated_words": [
+      "Staff", "Holy water", "Flower", "Herbs", "Angel wings", "Green", "White", "Light blue", "Pink", "Pastel",
+      "Light", "Regeneration", "Prayer", "Blessing", "Spell", "Bell", "Orb", "Heart", "Glow", "Aura",
+      "Crystal", "Petals", "Gentle touch", "Warmth", "Comfort", "Cure", "Remedy", "Sanctuary", "Purify", "Miracle",
+      "Healing wave", "Rejuvenate", "Lullaby", "Radiance", "Mend", "Grace", "Sanctify", "Peace", "Tranquility", "Support",
+      "Calm", "Balm", "Hope", "Charity", "Tears", "Harmony", "Faith", "Hymn", "Protection", "Shimmer",
+      "Halo", "Revive", "Regrowth", "Nurture", "Kindness", "Breath of life", "Soothing light", "Wish", "Serenity", "Holy circle",
+      "Vow", "Divine spark", "Healing hands", "Ethereal touch", "Light shower", "Magic dew", "Vital spark", "Healing rain", "White wind", "Clarity",
+      "Blessed aura", "Angel’s breath", "Holy emblem", "Resurrection", "Salvation", "Prayer beads", "Light beam", "Guardian charm", "Graceful echo", "Healing spring",
+      "Shield of light", "Moonlight", "Sacred flow", "Heavenly chant", "Heart bloom", "Spirit flower", "Soul balm", "Calm breeze", "Sanctified water", "Whisper of mercy"
+    ]
+  },
+  "Guard": {
+    "image": "Defense, shield, endurance, protector",
+    "shape_keywords": ["Square", "Thick", "Solid", "Rock", "Metal"],
+    "associated_words": [
+      "Shield", "Armor", "Wall", "Fortress", "Stone", "Blue", "Gray", "Brown", "Black", "Steel",
+      "Iron wall", "Stronghold", "Earth", "Tank", "Golem", "Plated armor", "Barrier", "Dome", "Fortify", "Guard stance",
+      "Protection", "Deflect", "Brace", "Anchor", "Tower", "Block", "Cover", "Defend", "Absorb", "Shell",
+      "Magnet armor", "Immovable", "Stone skin", "Heavy plate", "Steel body", "Vigilant", "Endurance", "Bulwark", "Ward", "Lockdown",
+      "Shell shield", "Crystal wall", "Grounded", "Unshakable", "Anchor point", "Steady stance", "Counter guard", "Rockfall", "Steel heart", "Safe zone",
+      "Iron defense", "Heavy shield", "Bastion", "Core shell", "Battle shell", "Steel storm", "Titan armor", "Guardian form", "Harden", "Rock guard",
+      "Steel barrier", "Sacrificial wall", "Stonebound", "Weight", "Protection aura", "Unyielding", "Ground shield", "Defender's cry", "Cover ally", "Dome field",
+      "Defensive zone", "Magnetic wall", "Sacred guard", "Earthen rise", "Iron dome", "Hold the line", "Iron grip", "Wall of might", "Guardian pulse", "Shield crush",
+      "Protective force", "Bodyguard", "Unbreakable", "Stalwart", "Strong skin", "Defender's oath", "Armor soul", "Defense core", "Last stand", "Steadfast"
+    ]
+  },
+  "Speeder": {
+    "image": "Agility, mobility, high speed, evasion",
+    "shape_keywords": ["Slim", "Aerodynamic", "Wings", "Lightning"],
+    "associated_words": [
+      "Blade", "Sneakers", "Hover", "Booster", "Dash", "Speed", "Evasion", "Shadow", "Wind", "Blue",
+      "Purple", "Silver", "Teleport", "Sonic", "Blink", "Double step", "Whirl", "Flash", "Arrow", "Windmill",
+      "Swirl", "Feather", "Step", "Flight", "Wing jump", "Ghost dash", "Wind burst", "Quick move", "Evade", "Trick step",
+      "Swift", "Jump", "Backstep", "Side step", "Fast roll", "Smoke step", "Leap", "Trail", "Tailwind", "Afterimage",
+      "Fast blade", "Tornado edge", "Fast cut", "Rush dance", "Lightning step", "Surge", "Glide", "Mirror dash", "Vanish", "Zoom",
+      "Hyper dash", "Phantom strike", "Aerial twist", "Pulse shift", "Hover strike", "Zigzag", "Dodge", "Sprint", "Acceleration", "Wind dash",
+      "Overstep", "Burst speed", "Lightfoot", "Velocity", "Whiz", "Gale", "Breakneck", "Flicker", "Chain dash", "Trail dash",
+      "Speed storm", "Evasive move", "Turbo", "Blink blade", "Air jump", "Sky cut", "Hover blade", "Eagle dive", "Momentum", "Dart",
+      "Impulse", "Vortex shift", "Tail strike", "Shadow blink", "Quick thrust", "Rapid claw", "Swift slide", "Lightning rush", "Phase jump", "Wing blade"
+    ]
+  },
+  "Magician": {
+    "image": "Magic, wisdom, mystery, long range",
+    "shape_keywords": ["Spiral", "Staff", "Star", "Smoke", "Circle"],
+    "associated_words": [
+      "Staff", "Grimoire", "Crystal", "Magic circle", "Orb", "Spell", "Enchant", "Light", "Darkness", "Illusion",
+      "Time", "Space", "Star", "Mystery", "Wisdom", "Purple", "Indigo", "Gold", "White", "Chant",
+      "Summon", "Transformation", "Hood", "Floating", "Tarot", "Stardust", "Mana", "Arcane", "Cosmic", "Elemental",
+      "Fireball", "Ice spike", "Lightning bolt", "Black hole", "Barrier", "Meteor", "Storm", "Wind", "Flame", "Freeze",
+      "Levitate", "Mirror", "Teleport", "Blink", "Explosion", "Gravity", "Curse", "Hex", "Magic burst", "Focus",
+      "Rune", "Wand", "Divine seal", "Mystic ray", "Spell seal", "Eclipse", "Moonlight", "Sunflare", "Nova", "Energy",
+      "Mana wave", "Astral field", "Chaos sphere", "Dream fog", "Mind control", "Illusion field", "Aura wave", "Phase shift", "Charm", "Polymorph",
+      "Binding circle", "Arcane ring", "Starfall", "Crystallize", "Mana spark", "Forbidden spell", "Timeloop", "Soul light", "Energy shield", "Reflection",
+      "Runic blade", "Spirit flame", "Element storm", "Summoning gate", "Astral echo", "Fog veil", "Ghost light", "Void zone", "Comet strike", "Wisdom orb"
+    ]
+  }
+}
