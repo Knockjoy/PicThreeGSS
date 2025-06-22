@@ -12,6 +12,10 @@ import base64
 from io import BytesIO
 from PIL import Image
 
+connectionID:int=0
+cardid:int=0
+
+
 app =FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -37,12 +41,11 @@ async def uploadfile():
     
     pass
 
-userids:int=0
 
 def createid():
-    global userids
-    userids+=1
-    return userids
+    global connectionID
+    connectionID+=1
+    return connectionID
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket:WebSocket):
@@ -65,6 +68,10 @@ async def websocket_endpoint(websocket:WebSocket):
             # await websocket.send_text(f"your msg is {data}")
     except WebSocketDisconnect:
         websocket.close()
+
+async def createCard():
+    
+    pass
 
 async def GameRouter(routeCommand,data):
     

@@ -27,7 +27,7 @@ def wakeupDB():
         """
     )
     db.commit()
-    
+
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS cards(
@@ -45,12 +45,12 @@ def wakeupDB():
         """
     )
     db.commit()
-    
+
     db.close()
     pass
 
 
-async def saveImg(userId,img: Image):
+async def saveImg(userId, img: Image):
 
     db = sqlite3.connect(imgDB)
 
@@ -58,17 +58,18 @@ async def saveImg(userId,img: Image):
     try:
         tdate = datetime.date.today()
         cursor.execute("SELECT COUNT(id) from images")
-        res=cursor.fetchall()
-        print(res[0][0])
-        
+        res = cursor.fetchall()
         num = res[0][0] + 1
-        img.save(f"src/GameServer/db/imgs/sketch{tdate.strftime("%y%m%d")}{num}.png")
         cursor.execute(
             "INSERT INTO images(userid,imgid) VALUES (?,?)",
-            (userId,  tdate.strftime("%y%m%d") + str(num)),
+            (userId, tdate.strftime("%Y%m%d%H%M%S") + str(num)),
         )
         db.commit()
-        return  tdate.strftime("%y%m%d") + str(num)
+        img.save(
+            f"src/GameServer/db/imgs/sketch{tdate.strftime("%Y%m%d%H%M%S")}{num}.png"
+        )
+
+        return tdate.strftime("%Y%m%d%H%M%S") + str(num)
     except sqlite3.Error as e:
         print(f"An Error occurred {e}")
         db.rollback()
@@ -79,4 +80,4 @@ async def saveImg(userId,img: Image):
 
 if __name__ == "__main__":
     wakeupDB()
-    saveImg(-1, "6e9f01")
+    # saveImg(-1, "6e9f01")
