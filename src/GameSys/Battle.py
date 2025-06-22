@@ -31,6 +31,7 @@ class Battle1v1:
         # TODO:Tryさせる
         for i in queue:
             i[0].execSkill()
+        # TODO:ゲーム終了判定
 
     def sortCardsQueue(self):
         allCards: List[Charactor] = list()

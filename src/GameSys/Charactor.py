@@ -383,18 +383,17 @@ class Healer(Charactor):
 class Guard(Charactor):
     def __init__(self, status: CharactorStatus, role: RoleStatus):
         super().__init__(status, role)
-        self.skills.append([
-            SkillStatus("normalGuard","通常ガード",1,0,-1,True),
-            self.normalGuard
-        ])
-        self.skills.append([
-            SkillStatus("strongGuard","強力ガード",0,0,1,True),
-            self.strongGuard
-        ])
+        self.skills.append(
+            [SkillStatus("normalGuard", "通常ガード", 1, 0, -1, True), self.normalGuard]
+        )
+        self.skills.append(
+            [SkillStatus("strongGuard", "強力ガード", 0, 0, 1, True), self.strongGuard]
+        )
 
+    # TODO:未完成
     def normalGuard(self):
         pass
-    
+
     def strongGuard(self):
         pass
 
@@ -402,37 +401,36 @@ class Guard(Charactor):
 class Speeder(Charactor):
     def __init__(self, status, role):
         super().__init__(status, role)
-        self.skills.append([
-            SkillStatus("doubleAttack","二回攻撃",0,0,-1,True),
-            self.doubleAttack
-        ])
-        self.skills.append([
-            SkillStatus("stealth","ステルス",0,0,-1,True),
-            self.stealth
-        ])
-    
+        self.skills.append(
+            [SkillStatus("doubleAttack", "二回攻撃", 0, 0, -1, True), self.doubleAttack]
+        )
+        self.skills.append(
+            [SkillStatus("stealth", "ステルス", 0, 0, -1, True), self.stealth]
+        )
+
     def doubleAttack(self):
         pass
-    
+
     def stealth(self):
         pass
 
 
 class Magician(Charactor):
-    def __init__(self, 
-                 status,
-                 role,
-        maindCntrolPr:float,
-        debuffPower:CharactorStatus,
-        debuffLifeTime:int,
-        debuffPr:float # 自分も被弾する確率
-                 ):
-        
+    def __init__(
+        self,
+        status,
+        role,
+        maindCntrolPr: float,
+        debuffPower: CharactorStatus,
+        debuffLifeTime: int,
+        debuffPr: float,  # 自分も被弾する確率
+    ):
+
         super().__init__(status, role)
-        self.maindControl=maindCntrolPr
-        self.deBuffPower=debuffPower
-        self.debuffLifeTime=debuffLifeTime
-        self.debuffPr=debuffPr
+        self.maindControl = maindCntrolPr
+        self.deBuffPower = debuffPower
+        self.debuffLifeTime = debuffLifeTime
+        self.debuffPr = debuffPr
         self.mindControlmsg = "マインドコントロール"
         self.unmindControle = "マインドコントロールにしっぱい"
 
@@ -442,17 +440,12 @@ class Magician(Charactor):
                 self.mindControl,
             ]
         )
-        self.skills.append(
-            [
-                SkillStatus("giveDebuff","デバフ",0,0,-1,True)
-            ]
-        )
+        self.skills.append([SkillStatus("giveDebuff", "デバフ", 0, 0, -1, True)])
 
-    def showTargetSkill(self,target:Charactor):
+    def showTargetSkill(self, target: Charactor):
         # TODO:ここもっとちゃんと作る
         return target.skills
-    
-    
+
     def mindControl(
         self,
         target: Charactor,
@@ -463,29 +456,29 @@ class Magician(Charactor):
             target.receveMind(targetSkill, SkillTarget)
             return self.mindControlmsg
         return self.unmindControle
-    
-    def giveDebuff(self,target:Charactor):
-        target.receveDeBuff(self.deBuffPower,self.debuffLifeTime)
-        if random.random() <=self.debuffPr:
-            self.receveDeBuff(self.deBuffPower,self.debuffLifeTime)
-        
+
+    def giveDebuff(self, target: Charactor):
+        target.receveDeBuff(self.deBuffPower, self.debuffLifeTime)
+        if random.random() <= self.debuffPr:
+            self.receveDeBuff(self.deBuffPower, self.debuffLifeTime)
+
 
 if __name__ == "__main__":
-    m=Magician(
-        CharactorStatus(10,1,0,0),
-        RoleStatus("aa","aa"),
+    m = Magician(
+        CharactorStatus(10, 1, 0, 0),
+        RoleStatus("aa", "aa"),
         1,
-        CharactorStatus(0,-1,0,0),
+        CharactorStatus(0, -1, 0, 0),
         1,
-        0
+        0,
     )
-    a=Attacker(
-            CharactorStatus(hp=10, attack=1, defence=2, speed=3),
+    a = Attacker(
+        CharactorStatus(hp=10, attack=1, defence=2, speed=3),
         RoleStatus("attacker", "pipi"),
         10,
         15,
         20,
     )
-    print(m.mindControl(a,a.skills[0],a))
+    print(m.mindControl(a, a.skills[0], a))
     a.execSkill()
     print(a.status)

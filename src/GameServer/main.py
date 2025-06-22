@@ -19,6 +19,8 @@ from loadImage import *
 import RoleAnalyze
 import StatusAnalyze
 
+# TODO:userIdの複雑化
+
 connectionID:int=0
 cardid:int=0
 
@@ -79,9 +81,19 @@ async def websocket_endpoint(websocket:WebSocket):
                 if role=="speeder":role=3
                 if role=="magician":role=4
                 hp,attack,defence,speed=StatusAnalyze.analyze(imgpath)
+                hp*=1000
+                attack*=100
+                defence*=100
+                speed*=100
+                hp=int(hp)
+                attack=int(attack)
+                defence=int(defence)
+                speed=int(speed)
+                
                 cardid=createCard(userid,imgid,charaname,role,hp,attack,defence,speed)
                 print((userid,imgid,charaname,role,hp,attack,defence,speed))
-                await websocket.send_json({"status":"cardCreated","careteStatus":"success","cardid":cardid})
+                # await websocket.send_json({"status":"test","data":role})
+                await websocket.send_json({"status":"cardCreated","careateStatus":"success","cardid":cardid,"charaname":charaname,"sketch":data["sketch"],"cardstatus":{"role":role,"hp":hp,"attack":attack,"defence":defence,"speed":speed}})
             # await websocket.send_text(f"your msg is {data}")
     except WebSocketDisconnect:
         websocket.close()
@@ -100,5 +112,5 @@ async def MatchManager():
 if __name__=="__main__":
     print(RoleAnalyze.analyze("/root/picthree/PicThreeAI/Apple.png"))
     wakeupDB()
-    uvicorn.run("main:app",host="localhost",port=19009,lifespan="on",reload=True)
+    uvicorn.run("main:app",host="0.0.0.0",port=19004,lifespan="on",reload=True)
     pass

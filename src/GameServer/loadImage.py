@@ -3,7 +3,9 @@ from PIL import Image
 import datetime
 
 imgDB = "/root/picthree/PicThreeGSS/src/GameServer/db/SketchCardBattle.db"
-
+# TODO:画像返却関数の実装
+# TODO:バトルマッチングの実装
+# TODO:バトルの進行
 
 def wakeupDB():
     db = sqlite3.connect(imgDB)
