@@ -167,18 +167,64 @@ class Charactor_(ABC, Generic[C_]):
 # Charactorの実装
 class Charactor(Charactor_, Generic[C]):
     def __init__(self, status, role):
+
         super().__init__(status, role)
+
         self.thisTurnSkill: List[tuple[tuple[SkillStatus, Callable], C]] = []
+        self.thisTrunGuard :List[tuple[str,float]]= []
         self.skills: List[tuple[SkillStatus, Callable]] = [
             [SkillStatus("normalAttack", "通常攻撃", 0, 0, -1, True), self.normalAttack]
         ]
         self.mindControledQueue: List[tuple[tuple[SkillStatus, Callable], C]] = []
 
+    def noguardmsg(self, damage: float) -> str:
+        return f"ダメージを{str(damage)}受けた"
+
+    def guardmsg(self, damage: float) -> str:
+        return f"防御でダメージ軽減,ダメージを{damage}受けた"
+
     def normalAttack(self, target: C):
         target.status.hp -= self.status.attack
 
-    def receveDamage(self, damage: float) -> None:
+    def setGuard(self, guardtype:str,guardpoint: float):
+        """
+        guardtype:str 軽減方式を選択 - or *
+        guardpoint float 軽減方式に基づいて計算される値
+        """
+        self.thisTrunGuard.append([guardtype,guardpoint])
+        pass
+
+    def receveDamage(self, damage: float, penetrate: bool = False) -> None:
+        """
+        damage:float ダメージ量
+        penetrate:bool 防御貫通 通常時false
+        """
+        if self.thisTrunGuard !=[] and penetrate:
+            # 貫通の貫通塞ぎ
+            thisguard=self.thisTrunGuard.pop(0)
+            if thisguard[1]==-1:
+                return "強力ガードによる一撃必殺無効化"
+        if self.thisTrunGuard != [] and not penetrate:
+            # ガードされるとき
+            # TODO:マイナス、パーセント
+            thisguard = self.thisTrunGuard.pop(0)
+            damage = damage - thisguard[1]
+            if damage < 0:
+                damage = 0
+            self.status.hp -= damage
+            return self.guardmsg(damage - thisguard[1])
+
         self.status.hp -= damage
+        return self.noguardmsg(damage)
+    
+    def decreeceOrPer(self,calculationtype:str,point1:float,point2:float)->float:
+        """
+        マイナス : point1 - point2
+        スター : point1 * point2
+        """
+        if calculationtype=="-":return point1-point2
+        if calculationtype=="*":return point1*point2
+        
 
     def receveBuff(self, Buff: CharactorStatus, lifetime: int = -1):
         self.status.addStatus(Buff, lifetime)
@@ -220,13 +266,14 @@ class Charactor(Charactor_, Generic[C]):
                 resultmsg.append(i[0][1](i[1]))  # 技を実行
                 i[0][0].useSkill()  # 技ステータスに反映
 
-            self.mindControledQueue = []  # 初期化
+            self.TurnInitialize() # 初期化
 
             self.nextTurn()
             return f"minded:{resultmsg}"
 
         if self.thisTurnSkill == []:
-            raise GameException.NoselectedSkill()
+            return ""
+            # raise GameException.NoselectedSkill()
         if (
             self.thisTurnSkill[0][0].nowlooktime != 0
             and self.thisTurnSkill[0][0].usetimes == 0
@@ -234,9 +281,14 @@ class Charactor(Charactor_, Generic[C]):
             raise GameException.DontUseSkill()
         resultmsg = self.thisTurnSkill[0][1](self.thisTurnSkill[1])  # 技を実行
         self.thisTurnSkill[0][0].useSkill()  # 技ステータスに反映
-        self.thisTurnSkill = []  # 初期化
+        self.TurnInitialize() #初期化
         self.nextTurn()
         return resultmsg
+
+    def TurnInitialize(self):
+        self.thisTurnSkill = []  # 初期化
+        self.thisTrunGuard = []
+        self.mindControledQueue = []
 
     def setThisTurnSkill(self, skill: tuple[SkillStatus, Callable], target: C = None):
         # リセレクト禁止
@@ -244,7 +296,8 @@ class Charactor(Charactor_, Generic[C]):
             raise GameException.DontReselect()
         # スキルが選択されていないとき
         if skill == [] and skill == None:
-            raise GameException.NoselectedSkill()
+            return
+            # raise GameException.NoselectedSkill()
 
         skill_status: SkillStatus = skill[0]
 
@@ -392,10 +445,12 @@ class Guard(Charactor):
 
     # TODO:未完成
     def normalGuard(self):
+        
         pass
 
     def strongGuard(self):
         pass
+
 
 # TODO:未完成
 class Speeder(Charactor):
@@ -408,10 +463,13 @@ class Speeder(Charactor):
             [SkillStatus("stealth", "ステルス", 0, 0, -1, True), self.stealth]
         )
 
-    def doubleAttack(self):
+    def doubleAttack(self, target: Charactor):
+        # ダブルダメージ
+        target.receveDamage(self.status.attack * 2)
         pass
 
-    def stealth(self):
+    def stealth(self, target: Charactor):
+
         pass
 
 
