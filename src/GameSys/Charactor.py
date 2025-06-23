@@ -397,7 +397,7 @@ class Guard(Charactor):
     def strongGuard(self):
         pass
 
-
+# TODO:未完成
 class Speeder(Charactor):
     def __init__(self, status, role):
         super().__init__(status, role)

@@ -4,8 +4,6 @@ import datetime
 
 imgDB = "/root/picthree/PicThreeGSS/src/GameServer/db/SketchCardBattle.db"
 # TODO:画像返却関数の実装
-# TODO:バトルマッチングの実装
-# TODO:バトルの進行
 
 def wakeupDB():
     db = sqlite3.connect(imgDB)
@@ -22,8 +20,9 @@ def wakeupDB():
     db.commit()
     cursor.execute(
         """
-        CREATE TABLE IF NOT EXISTS user(
+        CREATE TABLE IF NOT EXISTS users(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            userid INTEGER NOT NULL,
             username TEXT NOT NULL
         )
         """
@@ -101,7 +100,46 @@ async def saveImg(userId, img: Image):
     db.close()
     pass
 
+def saveUserName(userid,username):
+    db = sqlite3.connect(imgDB)
+    cursor = db.cursor()
+    try:
+        cursor.execute("INSERT INTO users(userid,username) VALUES (?,?)",(userid,username))
+        db.commit()
+    except sqlite3.Error as e:
+        print(e)
+        db.rollback()
+    db.close()
+    pass
+
+def getCard(cardid):
+    db = sqlite3.connect(imgDB)
+    cursor = db.cursor()
+    try:
+        cursor.execute(f"SELECT * FROM cards where cardid='{cardid}'")
+        res=cursor.fetchall()
+        res=res[0]
+        # cardname=res[4]
+        return res
+    except sqlite3.Error as e:
+        print(e)
+    db.close()
+
+def getUser(userid):
+    db = sqlite3.connect(imgDB)
+    cursor = db.cursor()
+    try:
+        cursor.execute(f"SELECT * FROM users where userid='{userid}'")
+        res=cursor.fetchall()
+        res=res[0]
+        # cardname=res[4]
+        return res
+    except sqlite3.Error as e:
+        print(e)
+    db.close()
+
 
 if __name__ == "__main__":
     wakeupDB()
+    # getCard("20250623000000138")
     # saveImg(-1, "6e9f01")
