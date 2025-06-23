@@ -171,7 +171,7 @@ class Charactor(Charactor_, Generic[C]):
         super().__init__(status, role)
 
         self.thisTurnSkill: List[tuple[tuple[SkillStatus, Callable], C]] = []
-        self.thisTrunGuard :List[tuple[str,float]]= []
+        self.thisTrunGuard: List[tuple[str, float]] = []
         self.skills: List[tuple[SkillStatus, Callable]] = [
             [SkillStatus("normalAttack", "通常攻撃", 0, 0, -1, True), self.normalAttack]
         ]
@@ -186,12 +186,12 @@ class Charactor(Charactor_, Generic[C]):
     def normalAttack(self, target: C):
         target.status.hp -= self.status.attack
 
-    def setGuard(self, guardtype:str,guardpoint: float):
+    def setGuard(self, guardtype: str, guardpoint: float):
         """
         guardtype:str 軽減方式を選択 - or *
         guardpoint float 軽減方式に基づいて計算される値
         """
-        self.thisTrunGuard.append([guardtype,guardpoint])
+        self.thisTrunGuard.append([guardtype, guardpoint])
         pass
 
     def receveDamage(self, damage: float, penetrate: bool = False) -> None:
@@ -199,32 +199,35 @@ class Charactor(Charactor_, Generic[C]):
         damage:float ダメージ量
         penetrate:bool 防御貫通 通常時false
         """
-        if self.thisTrunGuard !=[] and penetrate:
+        if self.thisTrunGuard != [] and penetrate:
             # 貫通の貫通塞ぎ
-            thisguard=self.thisTrunGuard.pop(0)
-            if thisguard[1]==-1:
+            thisguard = self.thisTrunGuard.pop(0)
+            if thisguard[1] == -1:
                 return "強力ガードによる一撃必殺無効化"
         if self.thisTrunGuard != [] and not penetrate:
             # ガードされるとき
-            # TODO:マイナス、パーセント
             thisguard = self.thisTrunGuard.pop(0)
-            damage = damage - thisguard[1]
+            # damage = damage - thisguard[1]
+            damage = self.decreeceOrPer(thisguard[0], damage, thisguard[1])
             if damage < 0:
                 damage = 0
             self.status.hp -= damage
-            return self.guardmsg(damage - thisguard[1])
+            return self.guardmsg(self.decreeceOrPer(thisguard[0], damage, thisguard[1]))
 
         self.status.hp -= damage
         return self.noguardmsg(damage)
-    
-    def decreeceOrPer(self,calculationtype:str,point1:float,point2:float)->float:
+
+    def decreeceOrPer(
+        self, calculationtype: str, point1: float, point2: float
+    ) -> float:
         """
         マイナス : point1 - point2
         スター : point1 * point2
         """
-        if calculationtype=="-":return point1-point2
-        if calculationtype=="*":return point1*point2
-        
+        if calculationtype == "-":
+            return point1 - point2
+        if calculationtype == "*":
+            return point1 * point2
 
     def receveBuff(self, Buff: CharactorStatus, lifetime: int = -1):
         self.status.addStatus(Buff, lifetime)
@@ -233,10 +236,10 @@ class Charactor(Charactor_, Generic[C]):
         self.status.addStatus(DeBuff, lifetime)
 
     def receveMind(self, skill: tuple[SkillStatus, Callable], target: C = None):
-        # TODO:どうやって技を実装するか
         # スキルが選択されていないとき
         if skill == [] and skill == None:
-            raise GameException.NoselectedSkill()
+            pass
+            # raise GameException.NoselectedSkill()
 
         skill_status: SkillStatus = skill[0]
 
@@ -266,7 +269,7 @@ class Charactor(Charactor_, Generic[C]):
                 resultmsg.append(i[0][1](i[1]))  # 技を実行
                 i[0][0].useSkill()  # 技ステータスに反映
 
-            self.TurnInitialize() # 初期化
+            self.TurnInitialize()  # 初期化
 
             self.nextTurn()
             return f"minded:{resultmsg}"
@@ -281,7 +284,7 @@ class Charactor(Charactor_, Generic[C]):
             raise GameException.DontUseSkill()
         resultmsg = self.thisTurnSkill[0][1](self.thisTurnSkill[1])  # 技を実行
         self.thisTurnSkill[0][0].useSkill()  # 技ステータスに反映
-        self.TurnInitialize() #初期化
+        self.TurnInitialize()  # 初期化
         self.nextTurn()
         return resultmsg
 
@@ -445,7 +448,7 @@ class Guard(Charactor):
 
     # TODO:未完成
     def normalGuard(self):
-        
+
         pass
 
     def strongGuard(self):
