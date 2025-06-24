@@ -9,6 +9,7 @@
 from Player import Player
 from Charactor import *
 from typing import Tuple,List
+import copy
 
 
 class Battle1v1:
@@ -30,14 +31,27 @@ class Battle1v1:
         self._check_exception()  # TODO:すべてのカードにスキルがセットされているか
         queue = self.sortCardsQueue()
         # TODO:Tryさせる
+        thisturnHistory=[]
         for i in queue:
-            i.execSkill()
+            msg=i.execSkill()
+            if msg:thisturnHistory.append({"status":"skill","msg":msg,"cards":{"player1":copy.deepcopy(self.p1),"player2":copy.deepcopy(self.p2)}})
+            result=self.check_finish()
+        
+            if not result:
+                break
+        
+        if not result:
+            thisturnHistory.append("::nextturn::")
+        
         for i in queue:
-            i.nextTurn()
-        result=self.check_finish()
+            if not result:
+                break
+            msg=i.nextTurn()
+            if msg:thisturnHistory.append({"status":"skill","msg":msg,"cards":{"player1":copy.deepcopy(self.p1),"player2":copy.deepcopy(self.p2)}})
+            thisturnHistory.append()
         if result:
-            return {"game_status":"finish","msg":result}
-        return {"game_status":"continue"}
+            return {"game_status":"finish","msg":result,"history":thisturnHistory}
+        return {"game_status":"continue","history":thisturnHistory}
     
     def check_finish(self):    
         p1flag=False

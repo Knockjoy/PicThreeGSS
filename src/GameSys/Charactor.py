@@ -393,6 +393,8 @@ class Charactor(Charactor_, Generic[C]):
         for i in self.skills:
             i[0].nextTurn()
         self.status.nextTurn()
+        # TODO：メッセージの設定
+        return "バフの継続がAになった"
 
     def execSkill(self):
         """
@@ -413,7 +415,7 @@ class Charactor(Charactor_, Generic[C]):
             return f"minded:{resultmsg}"
 
         if self.thisTurnSkill == []:
-            return ""
+            return None
             # raise GameException.NoselectedSkill()
         if (
             self.thisTurnSkill[0][0].nowlooktime != 0

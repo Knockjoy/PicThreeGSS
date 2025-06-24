@@ -46,7 +46,6 @@ class BTManager:
     player2: BTPlayer
 
 
-# TODO:userIdの複雑化
 
 connectionID: int = 0
 cardid: int = 0
