@@ -8,8 +8,9 @@
 
 from Player import Player
 from Charactor import *
-from typing import Tuple,List
+from typing import Tuple, List
 import copy
+import dataclasses
 
 
 class Battle1v1:
@@ -28,54 +29,107 @@ class Battle1v1:
         pass
 
     def exec_battle(self):
-        self._check_exception()  # TODO:すべてのカードにスキルがセットされているか
+        # self._check_exception()  # TODO:すべてのカードにスキルがセットされているか
         queue = self.sortCardsQueue()
         # TODO:Tryさせる
-        thisturnHistory=[]
+        thisturnHistory = []
         for i in queue:
-            msg=i.execSkill()
-            if msg:thisturnHistory.append({"status":"skill","msg":msg,"cards":{"player1":copy.deepcopy(self.p1),"player2":copy.deepcopy(self.p2)}})
-            result=self.check_finish()
-        
+            msg = i.execSkill()
+            if msg:
+                thisturnHistory.append(
+                    {
+                        "status": "skill",
+                        "msg": msg,
+                        "cards": {
+                            "player1": [
+                                {
+                                    "charactorStatus": dataclasses.asdict(i.status),
+                                    "skillStatus": [
+                                        dataclasses.asdict(j[0]) for j in i.skills
+                                    ],
+                                }
+                                for i in self.p1.cards
+                            ],
+                            "player2": [
+                                {
+                                    "charactorStatus": dataclasses.asdict(i.status),
+                                    "skillStatus": [
+                                        dataclasses.asdict(j[0]) for j in i.skills
+                                    ],
+                                }
+                                for i in self.p2.cards
+                            ],
+                        },
+                    }
+                )
+            result = self.check_finish()
+
             if not result:
                 break
-        
+
         if not result:
             thisturnHistory.append("::nextturn::")
-        
+
         for i in queue:
             if not result:
                 break
-            msg=i.nextTurn()
-            if msg:thisturnHistory.append({"status":"skill","msg":msg,"cards":{"player1":copy.deepcopy(self.p1),"player2":copy.deepcopy(self.p2)}})
+            msg = i.nextTurn()
+            if msg:
+                thisturnHistory.append(
+                    thisturnHistory.append(
+                        {
+                            "status": "skill",
+                            "msg": msg,
+                            "cards": {
+                                "player1": [
+                                    {
+                                        "charactorStatus": dataclasses.asdict(i.status),
+                                        "skillStatus": [
+                                            dataclasses.asdict(j[0]) for j in i.skills
+                                        ],
+                                    }
+                                    for i in self.p1.cards
+                                ],
+                                "player2": [
+                                    {
+                                        "charactorStatus": dataclasses.asdict(i.status),
+                                        "skillStatus": [
+                                            dataclasses.asdict(j[0]) for j in i.skills
+                                        ],
+                                    }
+                                    for i in self.p2.cards
+                                ],
+                            },
+                        }
+                    )
+                )
             thisturnHistory.append()
         if result:
-            return {"game_status":"finish","msg":result,"history":thisturnHistory}
-        return {"game_status":"continue","history":thisturnHistory}
-    
-    def check_finish(self):    
-        p1flag=False
-        p2flag=False
+            return {"game_status": "finish", "msg": result, "history": thisturnHistory}
+        return {"game_status": "continue", "history": thisturnHistory}
+
+    def check_finish(self):
+        p1flag = False
+        p2flag = False
         for i in self.p1.cards:
             # 一度でも死んでないカードがあれば
-            p1flag=p1flag or not (i.status.isdeath)
+            p1flag = p1flag or not (i.status.isdeath)
         for i in self.p2.cards:
             # 一度でも死んでないカードがあれば
-            p2flag=p2flag or not (i.status.isdeath)
+            p2flag = p2flag or not (i.status.isdeath)
 
         if not (p1flag or p2flag):
             # 引き分け
-            return {"game_finish":"draw"}
+            return {"game_finish": "draw"}
         if not p1flag:
             # p2勝ち
-            return {"game_finish":"win","player":"p2"}
+            return {"game_finish": "win", "player": "p2"}
         if not p2flag:
             # p1勝ち
-            return {"game_finish":"win","player":"p1"}
+            return {"game_finish": "win", "player": "p1"}
         return None
-    
 
-    def sortCardsQueue(self)->List[Charactor]:
+    def sortCardsQueue(self) -> List[Charactor]:
         allCards: List[Charactor] = list()
         for i in [self.p1, self.p2]:
             allCards.extend(i.cards)  # すべてのカードを格納
