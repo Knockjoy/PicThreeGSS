@@ -4,6 +4,12 @@ import datetime
 
 imgDB = "/root/picthree/PicThreeGSS/src/GameServer/db/SketchCardBattle.db"
 
+def timeid():
+    t_delta = datetime.timedelta(hours=9)
+    JST = datetime.timezone(t_delta, 'JST')
+    now = datetime.datetime.now(JST)
+    d = now.strftime('%Y%m%d%H%M%S')
+    return f"{d}"
 def wakeupDB():
     db = sqlite3.connect(imgDB)
     cursor = db.cursor()
@@ -56,8 +62,7 @@ def createCard(userId, ImgId, charaName, role, hp, attack, defence, speed)->str:
     """
     db = sqlite3.connect(imgDB)
     cursor = db.cursor()
-    tdate = datetime.date.today()
-    dataid = tdate.strftime("%Y%m%d%H%M%S")
+    dataid = timeid()
     try:
         cursor.execute("SELECT COUNT(id) from cards")
         res=cursor.fetchall()
@@ -79,8 +84,7 @@ async def saveImg(userId, img: Image):
 
     db = sqlite3.connect(imgDB)
     cursor = db.cursor()
-    tdate = datetime.date.today()
-    dataid = tdate.strftime("%Y%m%d%H%M%S")
+    dataid = timeid()
     try:
         cursor.execute("SELECT COUNT(id) from images")
         res = cursor.fetchall()

@@ -80,13 +80,23 @@ BattleMatchs: List = []
 def createid():
     global connectionID
     connectionID += 1
-    return connectionID
+    t_delta = datetime.timedelta(hours=9)
+    JST = datetime.timezone(t_delta, 'JST')
+    now = datetime.datetime.now(JST)
+    d = now.strftime('%Y%m%d%H%M%S')
+    id=f"{d}{connectionID}"
+    return id
 
 
 def createBattleid():
     global battleid
     battleid += 1
-    return battleid
+    t_delta = datetime.timedelta(hours=9)
+    JST = datetime.timezone(t_delta, 'JST')
+    now = datetime.datetime.now(JST)
+    d = now.strftime('%Y%m%d%H%M%S')
+    id=f"{d}{battleid}"
+    return id
 
 
 def CardPacking(cardids):
@@ -199,30 +209,15 @@ async def matching_loop():
                     ),
                 )
             )
-            # all_battle.append(
-            #     {
-            #         "battleid": temp_battleid,
-            #         "battle": bt,
-            #         "player1": {
-            #             "userid": user1[0],
-            #             "socket": user1[1],
-            #             "playerinstance": user1Player,
-            #             "cardids": user1[2],
-            #         },
-            #         "player2": {
-            #             "userid": user2[0],
-            #             "socket": user2[1],
-            #             "playerinstance": user2Player,
-            #             "cardids": user2[2],
-            #         },
-            #     }
-            # )
             print(all_battle)
             print(user1[1])
+            # asyncio.sleep(1)
             await user1[1].send_json(
                 {
                     "status": "match_found",
                     "battleid": temp_battleid,
+                    "mycards":user1_cards,
+                    "opponetname":user2name,
                     "opponet": user2[0],
                     "opponetcards": user2_cards,
                 }
@@ -231,11 +226,24 @@ async def matching_loop():
                 {
                     "status": "match_found",
                     "battleid": temp_battleid,
+                    "mycards":user2_cards,
+                    "opponetname":user1name,
                     "opponet": user2[0],
                     "opponetcards": user1_cards,
                 }
             )
-
+        temp_battleid=None
+        user1=None
+        user1name=None
+        user1_cards=None
+        user1instance=None
+        user1Player=None
+        user2=None
+        user2name=None
+        user2_cards=None
+        user2instance=None
+        user2Player=None
+        
         await asyncio.sleep(1)
 
 
@@ -392,6 +400,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     }
                 )
             if status == "battle_in":
+                print(all_battle)
                 # ユーザーid、websocket,試合で使うカードid
                 waiting_users.append((userid, websocket, data["cardids"]))
                 await websocket.send_json({"status": "matching_wait"})
@@ -411,6 +420,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     data["skillnum"],
                     data["targetcardid"],
                 )
+                checkBattle(data["battleid"])
                 pass
             # await websocket.send_text(f"your msg is {data}")
     except WebSocketDisconnect:
