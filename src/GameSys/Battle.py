@@ -32,6 +32,8 @@ class Battle1v1:
         # TODO:Tryさせる
         for i in queue:
             i.execSkill()
+        for i in queue:
+            i.nextTurn()
         result=self.check_finish()
         if result:
             return {"game_status":"finish","msg":result}
@@ -67,7 +69,7 @@ class Battle1v1:
         cardAspeed = list()
         for i in allCards:
             rn = random.choice(randomBox)  # スピードが一致した時用の乱数
-            cardAspeed.append([i, i.status.sum().speed, rn])
+            cardAspeed.append([i, i.status.speed, rn])
             randomBox.remove(rn)
 
         result: List[Tuple[Charactor, int, int]] = sorted(

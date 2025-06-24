@@ -25,43 +25,140 @@ class CharactorStatus(Generic[S]):
     attack: float
     defence: float
     speed: float
-    queue: List[tuple[S, int]] = field(default_factory=list)
+    queue: List[tuple[S, int,bool,str]] = field(default_factory=list)
     isdeath:bool=False
     
     def __add__(self, status: S):
-        self.hp += status.hp
-        self.attack += status.attack
-        self.defence += status.defence
-        self.speed += status.speed
-        return self
+        hp=self.hp + status.hp
+        attack=self.attack + status.attack
+        defence=self.defence + status.defence
+        speed=self.speed + status.speed
+        return CharactorStatus(hp,attack,defence,speed,self.queue,self.isdeath)
+    
+    def __sub__(self,status:S):
+        hp=self.hp - status.hp
+        attack=self.attack - status.attack
+        defence=self.defence - status.defence
+        speed=self.speed - status.speed
+        return CharactorStatus(hp,attack,defence,speed,self.queue,self.isdeath)
+    
+    def __mul__(self,status:S):
+        hp=self.hp * status.hp
+        attack=self.attack * status.attack
+        defence=self.defence * status.defence
+        speed=self.speed * status.speed
+        return CharactorStatus(hp,attack,defence,speed,self.queue,self.isdeath)
 
-    # def __add__(self,status:S,lifetime:int=-1):
-    #     self.queue.append(status,lifetime)
-    # def __sub__(self,status:S,lifetime:int=-1):
-    #     self.queue.append(status,lifetime)
-    def addStatus(self, status: S, lifetime: int = -1):
-        self.queue.append([status, lifetime])
+    def __truediv__(self,status:S):
+        hp=self.hp / status.hp
+        attack=self.attack / status.attack
+        defence=self.defence / status.defence
+        speed=self.speed / status.speed
+        return CharactorStatus(hp,attack,defence,speed,self.queue,self.isdeath)
+
+
+    def addStatus(self, status: S, lifetime: int = -1,overlapping:bool=False,resolve_type:str="+"):
+        """
+        バフや回復を付与
+        lifetime 0:即時付与（解除不可）
+        lifetime n:nターン継続
+        lifetime -1:永久継続
+        overlapping : 毎ターン実行するか
+        resolve_type : 計算方法 + or - or * or /
+        """
+        if resolve_type!="+" or resolve_type!="-" or resolve_type!="*" or resolve_type!="/":
+            # TODO:計算エラー
+            pass
+        if lifetime==0:
+            self.resolve(resolve_type,status)
+        self.queue.append([status, lifetime,overlapping,resolve_type])
+    
+    def resolve(self,resolve_type,status:S):
+        """
+        楽々計算機
+        """
+        result=CharactorStatus(0,0,0,0)
+        if resolve_type=="+":
+            result=self.__add__(status)
+        if resolve_type=="-":
+            result=self.__sub__(status)
+        if resolve_type=="*":
+            result=self.__mul__(status)
+        if resolve_type=="/":
+            result=self.__truediv__(status)
+        self.hp=result.hp
+        self.attack=result.attack
+        self.defence=result.defence
+        self.speed=result.speed
+
+    def reverse_resolve(self,resolve_type,status:S):
+        """
+        楽々逆計算機
+        """
+        result=CharactorStatus(0,0,0,0)
+        if resolve_type=="-":
+            result=self.__add__(status)
+        if resolve_type=="+":
+            result=self.__sub__(status)
+        if resolve_type=="/":
+            result=self.__mul__(status)
+        if resolve_type=="*":
+            result=self.__truediv__(status)
+        self.hp=result.hp
+        self.attack=result.attack
+        self.defence=result.defence
+        self.speed=result.speed
+
 
     def checkDie(self)->bool:
         if self.hp<=0:
             self.isdeath=True
             return True
         return False
-    def sum(self) -> S:
-        result = CharactorStatus(0, 0, 0, 0)
-        for i in self.queue:
-            result += i[0]
-        result += self
-        return result
+    
+    def removeAddstatus(self,num:int=-1,remove_type:str="old"):
+        """
+        現在かかっているバフを解除します。
+        解除されるとステータスは元に戻ります。
+        num -1 すべて
+        remove_type "new"/"old"
+        """
+        if num==-1 or len(self.queue)<=num:
+            for i in self.queue:
+                self.reverse_resolve(i[3],i[0])
+                self.queue=[]
+        if remove_type=="new":
+            for i in self.queue[num:]:
+                self.reverse_resolve(i[3],i[0])
+                del self.queue[num:]
+        if remove_type=="old":
+            for i in self.queue[:num]:
+                self.reverse_resolve(i[3],i[0])
+                del self.queue[:num]
+
 
     def nextTurn(self):
+        """
+        ターン進行用処理
+        バフの効果期間のチェック
+        """
         rem = []
-        for i in range(len(self.queue) - 1):
-            n = self.queue[i]
-            if n - 1 == -1:  # 0から-1になった場合
+        # turn進行
+        for i,j in enumerate(self.queue):
+            j[1]-=1
+            if j[1]==-2:
+                j[1]=-1
+            if j[1]==-1:
                 rem.append(i)
+            
         for i in sorted(rem, reverse=True):
-            self.queue.pop(i)  # 切れた効果を消す
+            effect=self.queue.pop(i)  # 切れた効果を消す
+            self.reverse_resolve(effect[3],effect[0]) # 解消
+        
+        for i in self.queue:
+            # overlapping 有効
+            if i[2]:
+                self.resolve(i[3],i[0])
 
 
 @dataclass
@@ -97,6 +194,9 @@ class SkillStatus:
     target_exist: bool = True
 
     def useSkill(self):
+        """
+        スキルの使用制限に関する処理の進行
+        """
         n = self.usetimes - 1
         # 使用制限
         if n == -1:
@@ -112,6 +212,9 @@ class SkillStatus:
         self.nowlooktime += self.lookturn  # 待機ターンを作成
 
     def nextTurn(self):
+        """
+        スキルの使用禁止期限に関する処理の進行
+        """
         n = self.nowlooktime - 1
         if n == -1:
             self.nowlooktime = 0
@@ -241,11 +344,27 @@ class Charactor(Charactor_, Generic[C]):
         if calculationtype == "*":
             return point1 * point2
 
-    def receveBuff(self, Buff: CharactorStatus, lifetime: int = -1):
-        self.status.addStatus(Buff, lifetime)
+    def receveBuff(self, Buff: CharactorStatus, lifetime: int = -1,overlapping:bool=False,resolve_type:str="+"):
+        """
+        バフや回復を付与
+        lifetime 0:即時付与（解除不可）
+        lifetime n:nターン継続
+        lifetime -1:永久継続
+        overlapping : 毎ターン実行するか
+        resolve_type : 計算方法 + or - or * or /
+        """
+        self.status.addStatus(Buff, lifetime,overlapping,resolve_type)
 
-    def receveDeBuff(self, DeBuff: CharactorStatus, lifetime: int = -1):
-        self.status.addStatus(DeBuff, lifetime)
+    def receveDeBuff(self, Buff: CharactorStatus, lifetime: int = -1,overlapping:bool=False,resolve_type:str="+"):
+        """
+        バフや回復を付与
+        lifetime 0:即時付与（解除不可）
+        lifetime n:nターン継続
+        lifetime -1:永久継続
+        overlapping : 毎ターン実行するか
+        resolve_type : 計算方法 + or - or * or /
+        """
+        self.status.addStatus(Buff, lifetime,overlapping,resolve_type)
 
     def receveMind(self, skill: tuple[SkillStatus, Callable], target: C = None):
         # スキルが選択されていないとき
@@ -268,10 +387,17 @@ class Charactor(Charactor_, Generic[C]):
         # INFO:マジシャンの実装でパーセンテージを作る
 
     def nextTurn(self):
+        """
+        スキルの制限に関する処理やバフの効果処理
+        """
         for i in self.skills:
             i[0].nextTurn()
+        self.status.nextTurn()
 
     def execSkill(self):
+        """
+        技の実施
+        """
         # TODO:技メッセージリターン
         resultmsg = "none"
         if self.mindControledQueue != []:
@@ -284,7 +410,6 @@ class Charactor(Charactor_, Generic[C]):
 
             self.TurnInitialize()  # 初期化
 
-            self.nextTurn()
             return f"minded:{resultmsg}"
 
         if self.thisTurnSkill == []:
@@ -298,7 +423,6 @@ class Charactor(Charactor_, Generic[C]):
         resultmsg = self.thisTurnSkill[0][1](self.thisTurnSkill[1])  # 技を実行
         self.thisTurnSkill[0][0].useSkill()  # 技ステータスに反映
         self.TurnInitialize()  # 初期化
-        self.nextTurn()
         return resultmsg
 
     def TurnInitialize(self):
