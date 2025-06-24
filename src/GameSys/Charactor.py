@@ -26,7 +26,8 @@ class CharactorStatus(Generic[S]):
     defence: float
     speed: float
     queue: List[tuple[S, int]] = field(default_factory=list)
-
+    isdeath:bool=False
+    
     def __add__(self, status: S):
         self.hp += status.hp
         self.attack += status.attack
@@ -41,6 +42,11 @@ class CharactorStatus(Generic[S]):
     def addStatus(self, status: S, lifetime: int = -1):
         self.queue.append([status, lifetime])
 
+    def checkDie(self)->bool:
+        if self.hp<=0:
+            self.isdeath=True
+            return True
+        return False
     def sum(self) -> S:
         result = CharactorStatus(0, 0, 0, 0)
         for i in self.queue:
@@ -182,7 +188,8 @@ class Charactor(Charactor_, Generic[C]):
 
     def guardmsg(self, damage: float) -> str:
         return f"防御でダメージ軽減,ダメージを{damage}受けた"
-
+    def diemsg(self,damage:float):
+        return f"ダメージを{damage}受けた。hpがゼロになった。"
     def normalAttack(self, target: C):
         target.status.hp -= self.status.attack
 
@@ -207,14 +214,19 @@ class Charactor(Charactor_, Generic[C]):
         if self.thisTrunGuard != [] and not penetrate:
             # ガードされるとき
             thisguard = self.thisTrunGuard.pop(0)
-            # damage = damage - thisguard[1]
             damage = self.decreeceOrPer(thisguard[0], damage, thisguard[1])
             if damage < 0:
                 damage = 0
             self.status.hp -= damage
+            # 死亡チェック
+            if self.status.checkDie():
+                return self.diemsg(damage=damage)
             return self.guardmsg(self.decreeceOrPer(thisguard[0], damage, thisguard[1]))
 
         self.status.hp -= damage
+        # 死亡チェック
+        if self.status.checkDie():
+            return self.diemsg(damage=damage)
         return self.noguardmsg(damage)
 
     def decreeceOrPer(
@@ -260,6 +272,7 @@ class Charactor(Charactor_, Generic[C]):
             i[0].nextTurn()
 
     def execSkill(self):
+        # TODO:技メッセージリターン
         resultmsg = "none"
         if self.mindControledQueue != []:
             resultmsg: list = []

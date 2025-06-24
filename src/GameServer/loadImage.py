@@ -3,7 +3,6 @@ from PIL import Image
 import datetime
 
 imgDB = "/root/picthree/PicThreeGSS/src/GameServer/db/SketchCardBattle.db"
-# TODO:画像返却関数の実装
 
 def wakeupDB():
     db = sqlite3.connect(imgDB)
@@ -51,8 +50,10 @@ def wakeupDB():
     pass
 
 
-def createCard(userId, ImgId, charaName, role, hp, attack, defence, speed):
-
+def createCard(userId, ImgId, charaName, role, hp, attack, defence, speed)->str:
+    """
+    カード情報をDBに保存した後、cardidを発行します(str)
+    """
     db = sqlite3.connect(imgDB)
     cursor = db.cursor()
     tdate = datetime.date.today()

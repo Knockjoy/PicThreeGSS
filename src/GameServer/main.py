@@ -6,6 +6,7 @@ import base64
 from io import BytesIO
 import asyncio
 from typing import List, Union, Tuple
+from dataclasses import dataclass, asdict
 
 from PIL import Image
 import uvicorn
@@ -27,17 +28,36 @@ import StatusAnalyze
 
 # TODO:バトルの進行(ターン実行のみ)
 
+
+@dataclass
+class BTPlayer:
+    userid: str
+    socket: WebSocket
+    playerinstance: Player
+    cardids: List[str]
+    thisTurn: bool
+
+
+@dataclass
+class BTManager:
+    battleid: int
+    battle: Battle1v1
+    player1: BTPlayer
+    player2: BTPlayer
+
+
 # TODO:userIdの複雑化
 
 connectionID: int = 0
 cardid: int = 0
 battleid = 0
-all_battle = []
+all_battle: List[BTManager] = []
 path = "/root/picthree/PicThreeGSS/src/GameServer/db/imgs/"
 
 # TODO:typing 変更　union(,)＝＞type[userid]に置き換え
 # List[Tuple(Union[int,str],WebSocket,List[Union[int,str]])]
 waiting_users = []
+
 
 app = FastAPI()
 app.add_middleware(
@@ -159,25 +179,44 @@ async def matching_loop():
             user1Player = Player(user1name, user1instance)
             user2Player = Player(user2name, user2instance)
             bt = Battle1v1(user1Player, user2Player)
-            
             all_battle.append(
-                {
-                    "battleid": temp_battleid,
-                    "battle": bt,
-                    "player1": {
-                        "userid": user1[0],
-                        "socket": user1[1],
-                        "playerinstance": user1Player,
-                        "cardids":user1[2]
-                    },
-                    "player2": {
-                        "userid": user2[0],
-                        "socket": user2[1],
-                        "playerinstance": user2Player,
-                        "cardids":user2[2]
-                    },
-                }
+                BTManager(
+                    battleid=battleid,
+                    battle=bt,
+                    player1=BTPlayer(
+                        userid=user1[0],
+                        socket=user1[1],
+                        playerinstance=user1Player,
+                        cardids=user1[2],
+                        thisTurn=False,
+                    ),
+                    player2=BTPlayer(
+                        userid=user1[0],
+                        socket=user1[1],
+                        playerinstance=user1Player,
+                        cardids=user1[2],
+                        thisTurn=False,
+                    ),
+                )
             )
+            # all_battle.append(
+            #     {
+            #         "battleid": temp_battleid,
+            #         "battle": bt,
+            #         "player1": {
+            #             "userid": user1[0],
+            #             "socket": user1[1],
+            #             "playerinstance": user1Player,
+            #             "cardids": user1[2],
+            #         },
+            #         "player2": {
+            #             "userid": user2[0],
+            #             "socket": user2[1],
+            #             "playerinstance": user2Player,
+            #             "cardids": user2[2],
+            #         },
+            #     }
+            # )
             print(all_battle)
             print(user1[1])
             await user1[1].send_json(
@@ -199,47 +238,70 @@ async def matching_loop():
 
         await asyncio.sleep(1)
 
-def setSkill(userid,battleid,cardid,skillnum,targetcardid):
+
+def findBattle(battleid) -> BTManager:
+    battle = [item for item in all_battle if item.battleid == battleid]
+    return battle
+
+
+def setSkill(userid, battleid, cardid, skillnum, targetcardid):
     # battleidからバトルを絞る
     # useridからplayerインスタンスを見つける
-    battle=[item for item in all_battle if item.get("battleid")==battleid]
-    player=""
-    if battle["player1"]["userid"]==userid:
-        player="player1"
-    if battle["player2"]["userid"]==userid:
-        player="player2"
-    if battle["player1"]["cardids"].index(targetcardid):
-        targetchara=battle["player1"]["cardids"].index(targetcardid)
-        targetchara=battle["player1"]["playerinstance"][targetchara]
-        pass
-    if battle["player2"]["cardids"].index(targetcardid):
-        targetchara=battle["player2"]["cardids"].index(targetcardid)
-        targetchara=battle["player2"]["playerinstance"][targetchara]
+    battle = findBattle(battleid=battleid)
+    player = ""
+    
+    # 自分自身がどちらか
+    if battle.player1.userid == userid:
+        player = battle.player1
+    if battle.player2.userid == userid:
+        player = battle.player2
+    
+    # ターゲットはどれか
+    if battle.player1.cardids.index(targetcardid):
+        targetchara = battle.player1.cardids.index(targetcardid)
+        targetchara = battle.player1.playerinstance.cards[targetchara]
+    if battle.player2.cardids.index(targetcardid):
+        targetchara = battle.player2.playerinstance.cards.index(targetcardid)
+        targetchara = battle.player2.playerinstance.cards[targetchara]
 
-    mychara=battle[player]["playerinstance"][battle[player]["cardids"].index(cardid)]
-    mychara.setThisTurnSkill(mychara.skills[skillnum],targetchara)
+    mychara = player.playerinstance.cards[player.cardids.index(cardid)]
+    mychara.setThisTurnSkill(mychara.skills[skillnum], targetchara)
     pass
 
-def showSkill(userid,battleid,cardid):
+
+def showSkill(userid, battleid, cardid):
     # TODO:スキル開示を作る
     pass
 
+
 async def checkBattle(battleid):
     # TODO:バトルを実行できるか
-    battle=[item for item in all_battle if item.get("battleid")==battleid]
-    battle["battle"].exec_battle()
-    # TODO:技の実行順
-    await battle["player1"]["socket"].send_json({"status":"exec_battle","battleid":battleid})
-    await battle["player2"]["socket"].send_json({"status":"exec_battle","battleid":battleid})
-    
-    pass
+    # TODO:バトル終了
+    battle = findBattle(battleid)
+    if not (battle.player1.thisTurn and battle.player2.thisTurn):
+        # TODO:実行できなかったとき
+        await battle.player1.socket.send_json(
+            {"status": "exec_battle", "battleid": battleid,"msg":"faild"}
+        )
+        await battle.player2.socket.send_json(
+            {"status": "exec_battle", "battleid": battleid,"msg":"faild"}
+        )
+        return
+    result=battle.battle.exec_battle()
+    # TODO:技の実行順ログ
+    await battle.player1.socket.send_json(
+        {"status": "exec_battle", "battleid": battleid,"msg":"success"}
+    )
+    await battle.player2.socket.send_json(
+        {"status": "exec_battle", "battleid": battleid,"msg":"success"}
+    )
+    return
+
 
 def createImageURL(imgpath):
     with open(imgpath, "rb") as f:
         data = base64.b64encode(f.read())
     return "data:image/jpeg;base64," + data.decode("utf-8")
-
-
 
 
 @app.on_event("startup")
@@ -249,7 +311,7 @@ async def on_startup():
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Can't use this page"}
 
 
 @app.get("/home")
@@ -342,7 +404,13 @@ async def websocket_endpoint(websocket: WebSocket):
                     }
                 )
             if status == "set_skill":
-                setSkill(data["userid"],data["battleid"],data["cardid"],data["skillnum"],data["targetcardid"])
+                setSkill(
+                    data["userid"],
+                    data["battleid"],
+                    data["cardid"],
+                    data["skillnum"],
+                    data["targetcardid"],
+                )
                 pass
             # await websocket.send_text(f"your msg is {data}")
     except WebSocketDisconnect:

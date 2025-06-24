@@ -8,6 +8,7 @@
 
 from Player import Player
 from Charactor import *
+from typing import Tuple,List
 
 
 class Battle1v1:
@@ -30,10 +31,35 @@ class Battle1v1:
         queue = self.sortCardsQueue()
         # TODO:Tryさせる
         for i in queue:
-            i[0].execSkill()
-        # TODO:ゲーム終了判定
+            i.execSkill()
+        result=self.check_finish()
+        if result:
+            return {"game_status":"finish","msg":result}
+        return {"game_status":"continue"}
+    
+    def check_finish(self):    
+        p1flag=False
+        p2flag=False
+        for i in self.p1.cards:
+            # 一度でも死んでないカードがあれば
+            p1flag=p1flag or not (i.status.isdeath)
+        for i in self.p2.cards:
+            # 一度でも死んでないカードがあれば
+            p2flag=p2flag or not (i.status.isdeath)
 
-    def sortCardsQueue(self):
+        if not (p1flag or p2flag):
+            # 引き分け
+            return {"game_finish":"draw"}
+        if not p1flag:
+            # p2勝ち
+            return {"game_finish":"win","player":"p2"}
+        if not p2flag:
+            # p1勝ち
+            return {"game_finish":"win","player":"p1"}
+        return None
+    
+
+    def sortCardsQueue(self)->List[Charactor]:
         allCards: List[Charactor] = list()
         for i in [self.p1, self.p2]:
             allCards.extend(i.cards)  # すべてのカードを格納
@@ -44,11 +70,11 @@ class Battle1v1:
             cardAspeed.append([i, i.status.sum().speed, rn])
             randomBox.remove(rn)
 
-        result: List[Union[Charactor, int, int]] = sorted(
+        result: List[Tuple[Charactor, int, int]] = sorted(
             cardAspeed, key=lambda x: (x[1], x[2])
         )
 
-        return result
+        return [i[0] for i in result]
 
     def _check_exception(self):
         # TODO:例外を投げずにreturnし、APIを発行
