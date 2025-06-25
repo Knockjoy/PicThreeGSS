@@ -46,7 +46,6 @@ class BTManager:
     player2: BTPlayer
 
 
-
 connectionID: int = 0
 cardid: int = 0
 battleid = 0
@@ -80,10 +79,10 @@ def createid():
     global connectionID
     connectionID += 1
     t_delta = datetime.timedelta(hours=9)
-    JST = datetime.timezone(t_delta, 'JST')
+    JST = datetime.timezone(t_delta, "JST")
     now = datetime.datetime.now(JST)
-    d = now.strftime('%Y%m%d%H%M%S')
-    id=f"{d}{connectionID}"
+    d = now.strftime("%Y%m%d%H%M%S")
+    id = f"{d}{connectionID}"
     return id
 
 
@@ -91,10 +90,10 @@ def createBattleid():
     global battleid
     battleid += 1
     t_delta = datetime.timedelta(hours=9)
-    JST = datetime.timezone(t_delta, 'JST')
+    JST = datetime.timezone(t_delta, "JST")
     now = datetime.datetime.now(JST)
-    d = now.strftime('%Y%m%d%H%M%S')
-    id=f"{d}{battleid}"
+    d = now.strftime("%Y%m%d%H%M%S")
+    id = f"{d}{battleid}"
     return id
 
 
@@ -132,7 +131,7 @@ def CardPacking(cardids):
         if card[5] == "Attacker":
             temp_chara = Attacker(
                 cstatus,
-                RoleStatus("attacker", temp_cardname),
+                RoleStatus("attacker", temp_cardname,id_=temp_cardid),
                 storngPower=10,
                 strongHitPr=15,
                 oneHitKillPr=20,
@@ -140,33 +139,32 @@ def CardPacking(cardids):
             pass
         if card[5] == "Guard":
             # TODO:未完成に注意
-            temp_chara = Guard(cstatus, RoleStatus("guard", temp_cardname))
+            temp_chara = Guard(cstatus, RoleStatus("guard", temp_cardname,id_=temp_cardid))
             pass
         if card[5] == "Healer":
             temp_chara = Healer(
                 cstatus,
-                RoleStatus("healer", temp_cardname),
+                RoleStatus("healer", temp_cardname,id_=temp_cardid),
                 10,
                 CharactorStatus(hp=10, attack=10, defence=10, speed=10),
                 CharactorStatus(-10, 0, 0, 0),
             )
-        if card[5] == "Speeder":
-            # TODO:未完成に注意
-            temp_chara = Speeder(
-                cstatus,
-                RoleStatus("speeder", temp_cardname),
-            )
-            pass
-        if card[5] == "Magician":
-            temp_chara = Magician(
-                cstatus,
-                RoleStatus("magician", temp_cardname),
-                0.5,
-                CharactorStatus(0, -1, 0, 0),  # TODO:ここの設定をちゃんと作る
-                1,
-                0.3,
-            )
-            pass
+        # if card[5] == "Speeder":
+        #     # TODO:未完成に注意
+        #     temp_chara = Speeder(
+        #         cstatus,
+        #         RoleStatus("speeder", temp_cardname,id_=temp_cardid),
+        #     )
+        #     pass
+        # if card[5] == "Magician":
+        #     temp_chara = Magician(
+        #         cstatus,
+        #         RoleStatus("magician", temp_cardname,id_=temp_cardid),
+        #         0.5,
+        #         CharactorStatus(0, -1, 0, 0),  # TODO:ここの設定をちゃんと作る
+        #         1,
+        #         0.3,
+        #     )
         resinstance.append(temp_chara)
 
     return res, temp_username, resinstance
@@ -215,8 +213,8 @@ async def matching_loop():
                 {
                     "status": "match_found",
                     "battleid": temp_battleid,
-                    "mycards":user1_cards,
-                    "opponetname":user2name,
+                    "mycards": user1_cards,
+                    "opponetname": user2name,
                     "opponet": user2[0],
                     "opponetcards": user2_cards,
                 }
@@ -225,24 +223,24 @@ async def matching_loop():
                 {
                     "status": "match_found",
                     "battleid": temp_battleid,
-                    "mycards":user2_cards,
-                    "opponetname":user1name,
+                    "mycards": user2_cards,
+                    "opponetname": user1name,
                     "opponet": user2[0],
                     "opponetcards": user1_cards,
                 }
             )
-        temp_battleid=None
-        user1=None
-        user1name=None
-        user1_cards=None
-        user1instance=None
-        user1Player=None
-        user2=None
-        user2name=None
-        user2_cards=None
-        user2instance=None
-        user2Player=None
-        
+        temp_battleid = None
+        user1 = None
+        user1name = None
+        user1_cards = None
+        user1instance = None
+        user1Player = None
+        user2 = None
+        user2name = None
+        user2_cards = None
+        user2instance = None
+        user2Player = None
+
         await asyncio.sleep(1)
 
 
@@ -256,13 +254,13 @@ def setSkill(userid, battleid, cardid, skillnum, targetcardid):
     # useridからplayerインスタンスを見つける
     battle = findBattle(battleid=battleid)
     player = ""
-    
+
     # 自分自身がどちらか
     if battle.player1.userid == userid:
         player = battle.player1
     if battle.player2.userid == userid:
         player = battle.player2
-    
+
     # ターゲットはどれか
     if battle.player1.cardids.index(targetcardid):
         targetchara = battle.player1.cardids.index(targetcardid)
@@ -287,21 +285,17 @@ async def checkBattle(battleid):
     battle = findBattle(battleid)
     if not (battle.player1.thisTurn and battle.player2.thisTurn):
         # TODO:実行できなかったとき
-        await battle.player1.socket.send_json(
-            {"status": "exec_battle", "battleid": battleid,"msg":"faild"}
-        )
-        await battle.player2.socket.send_json(
-            {"status": "exec_battle", "battleid": battleid,"msg":"faild"}
-        )
+        for i in [battle.player1, battle.player2]:
+            await i.socket.send_json(
+                {"status": "exec_battle", "battleid": battleid, "msg": "faild"}
+            )
         return
-    result=battle.battle.exec_battle()
+    result = battle.battle.exec_battle()
     # TODO:技の実行順ログ
-    await battle.player1.socket.send_json(
-        {"status": "exec_battle", "battleid": battleid,"msg":"success"}
-    )
-    await battle.player2.socket.send_json(
-        {"status": "exec_battle", "battleid": battleid,"msg":"success"}
-    )
+    for i in [battle.player1, battle.player2]:
+        await i.socket.send_json(
+            {"status": "exec_battle", "battleid": battleid, "msg": "success"}
+        )
     return
 
 

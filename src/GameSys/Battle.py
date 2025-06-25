@@ -21,6 +21,9 @@ class Battle1v1:
         # ターン数
         self.turn = 0
 
+        # 一ターンに付与するMP量
+        self.grant_mp = 0
+
         self._first_check_exception()
 
     def _first_check_exception(self):
@@ -47,6 +50,7 @@ class Battle1v1:
                                     "skillStatus": [
                                         dataclasses.asdict(j[0]) for j in i.skills
                                     ],
+                                    "rolestatus": dataclasses.asdict(i.role),
                                 }
                                 for i in self.p1.cards
                             ],
@@ -56,6 +60,7 @@ class Battle1v1:
                                     "skillStatus": [
                                         dataclasses.asdict(j[0]) for j in i.skills
                                     ],
+                                    "rolestatus": dataclasses.asdict(i.role),
                                 }
                                 for i in self.p2.cards
                             ],
@@ -69,6 +74,14 @@ class Battle1v1:
 
         if not result:
             thisturnHistory.append("::nextturn::")
+        # Next Turn
+        # TODO:MP付与,付与メッセージ    
+        for i in [self.p1, self.p2]:
+            if i.mp_inheritance:
+                i.add_mp(self.grant_mp)
+            else:
+                for j in i.cards:
+                    j.status.add_mp(j.status.grant_mp)
 
         for i in queue:
             if not result:

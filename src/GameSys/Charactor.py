@@ -25,8 +25,10 @@ class CharactorStatus(Generic[S]):
     attack: float
     defence: float
     speed: float
-    queue: List[tuple[S, int,bool,str]] = field(default_factory=list)
-    isdeath:bool=False
+    mp:float=0 
+    grant_mp:float=0 # mpの付与量
+    queue: List[tuple[S, int,bool,str]] = field(default_factory=list) # バフ管理キュー
+    isdeath:bool=False # 死亡判定
     
     def __add__(self, status: S):
         hp=self.hp + status.hp
@@ -159,6 +161,16 @@ class CharactorStatus(Generic[S]):
             # overlapping 有効
             if i[2]:
                 self.resolve(i[3],i[0])
+    
+    def use_mp(self,point):
+        temp_mp=self.mp-point
+        # mp不足のとき
+        if(temp_mp<0):
+            raise GameException.NoMP()
+        self.mp=temp_mp
+    
+    def add_mp(self,point):
+        self.mp+=point
 
 
 @dataclass
@@ -171,7 +183,7 @@ class RoleStatus:
 
     chara_name: str
     nickname: str
-    # id:int
+    id_:str=None
     # lookskill:bool #このターンにskillを選択できるか
 
 
@@ -594,84 +606,84 @@ class Guard(Charactor):
         pass
 
 
-# TODO:未完成
-class Speeder(Charactor):
-    def __init__(self, status, role):
-        super().__init__(status, role)
-        self.skills.append(
-            [SkillStatus("doubleAttack", "二回攻撃", 0, 0, -1, True), self.doubleAttack]
-        )
-        self.skills.append(
-            [SkillStatus("stealth", "ステルス", 0, 0, -1, True), self.stealth]
-        )
+# # TODO:未完成
+# class Speeder(Charactor):
+#     def __init__(self, status, role):
+#         super().__init__(status, role)
+#         self.skills.append(
+#             [SkillStatus("doubleAttack", "二回攻撃", 0, 0, -1, True), self.doubleAttack]
+#         )
+#         self.skills.append(
+#             [SkillStatus("stealth", "ステルス", 0, 0, -1, True), self.stealth]
+#         )
 
-    def doubleAttack(self, target: Charactor):
-        # ダブルダメージ
-        target.receveDamage(self.status.attack * 2)
-        pass
+#     def doubleAttack(self, target: Charactor):
+#         # ダブルダメージ
+#         target.receveDamage(self.status.attack * 2)
+#         pass
 
-    def stealth(self, target: Charactor):
+#     def stealth(self, target: Charactor):
 
-        pass
+#         pass
 
 
-class Magician(Charactor):
-    def __init__(
-        self,
-        status,
-        role,
-        maindCntrolPr: float,
-        debuffPower: CharactorStatus,
-        debuffLifeTime: int,
-        debuffPr: float,  # 自分も被弾する確率
-    ):
+# class Magician(Charactor):
+#     def __init__(
+#         self,
+#         status,
+#         role,
+#         maindCntrolPr: float,
+#         debuffPower: CharactorStatus,
+#         debuffLifeTime: int,
+#         debuffPr: float,  # 自分も被弾する確率
+#     ):
 
-        super().__init__(status, role)
-        self.maindControl = maindCntrolPr
-        self.deBuffPower = debuffPower
-        self.debuffLifeTime = debuffLifeTime
-        self.debuffPr = debuffPr
-        self.mindControlmsg = "マインドコントロール"
-        self.unmindControle = "マインドコントロールにしっぱい"
+#         super().__init__(status, role)
+#         self.maindControl = maindCntrolPr
+#         self.deBuffPower = debuffPower
+#         self.debuffLifeTime = debuffLifeTime
+#         self.debuffPr = debuffPr
+#         self.mindControlmsg = "マインドコントロール"
+#         self.unmindControle = "マインドコントロールにしっぱい"
 
-        self.skills.append(
-            [
-                SkillStatus("mindControl", "マインドコントロール", 0, 0, 3, True),
-                self.mindControl,
-            ]
-        )
-        self.skills.append([SkillStatus("giveDebuff", "デバフ", 0, 0, -1, True)])
+#         self.skills.append(
+#             [
+#                 SkillStatus("mindControl", "マインドコントロール", 0, 0, 3, True),
+#                 self.mindControl,
+#             ]
+#         )
+#         self.skills.append([SkillStatus("giveDebuff", "デバフ", 0, 0, -1, True)])
 
-    def showTargetSkill(self, target: Charactor):
-        # TODO:ここもっとちゃんと作る
-        return target.skills
+#     def showTargetSkill(self, target: Charactor):
+#         # TODO:ここもっとちゃんと作る
+#         return target.skills
 
-    def mindControl(
-        self,
-        target: Charactor,
-        targetSkill: tuple[SkillStatus, Callable],
-        SkillTarget: Charactor,
-    ):
-        if random.random() <= self.maindControl:
-            target.receveMind(targetSkill, SkillTarget)
-            return self.mindControlmsg
-        return self.unmindControle
+#     def mindControl(
+#         self,
+#         target: Charactor,
+#         targetSkill: tuple[SkillStatus, Callable],
+#         SkillTarget: Charactor,
+#     ):
+#         if random.random() <= self.maindControl:
+#             target.receveMind(targetSkill, SkillTarget)
+#             return self.mindControlmsg
+#         return self.unmindControle
 
-    def giveDebuff(self, target: Charactor):
-        target.receveDeBuff(self.deBuffPower, self.debuffLifeTime)
-        if random.random() <= self.debuffPr:
-            self.receveDeBuff(self.deBuffPower, self.debuffLifeTime)
+#     def giveDebuff(self, target: Charactor):
+#         target.receveDeBuff(self.deBuffPower, self.debuffLifeTime)
+#         if random.random() <= self.debuffPr:
+#             self.receveDeBuff(self.deBuffPower, self.debuffLifeTime)
 
 
 if __name__ == "__main__":
-    m = Magician(
-        CharactorStatus(10, 1, 0, 0),
-        RoleStatus("aa", "aa"),
-        1,
-        CharactorStatus(0, -1, 0, 0),
-        1,
-        0,
-    )
+    # m = Magician(
+    #     CharactorStatus(10, 1, 0, 0),
+    #     RoleStatus("aa", "aa"),
+    #     1,
+    #     CharactorStatus(0, -1, 0, 0),
+    #     1,
+    #     0,
+    # )
     a = Attacker(
         CharactorStatus(hp=10, attack=1, defence=2, speed=3),
         RoleStatus("attacker", "pipi"),
@@ -679,6 +691,6 @@ if __name__ == "__main__":
         15,
         20,
     )
-    print(m.mindControl(a, a.skills[0], a))
+    # print(m.mindControl(a, a.skills[0], a))
     a.execSkill()
     print(a.status)

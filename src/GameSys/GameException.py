@@ -22,3 +22,7 @@ class DontUseSkill(Exception):
 class DontReselect(Exception):
     def __str__(self):
         return "技のリセレクトはできません。"
+
+class NoMP(Exception):
+    def __str__(self):
+        return "MPが足りません"
