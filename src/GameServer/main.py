@@ -113,22 +113,12 @@ def CardPacking(cardids):
         temp_username = user[2]
         imgpath = path + f"sketch{temp_imgid}.png"
 
-        res.append(
-            {
-                "userid": temp_userid,
-                "username": temp_username,
-                "img": createImageURL(imgpath),
-                "cardid": temp_cardid,
-                "charaname": temp_cardname,
-                "hp": temp_hp,
-            }
-        )
         # システム用インスタンス
         cstatus = CharactorStatus(
             hp=card[6], attack=card[7], defence=card[8], speed=card[9]
         )
         temp_chara = None
-        if card[5] == "Attacker":
+        if card[5] == "Attack":
             temp_chara = Attacker(
                 cstatus,
                 RoleStatus("attacker", temp_cardname,id_=temp_cardid),
@@ -166,6 +156,16 @@ def CardPacking(cardids):
         #         0.3,
         #     )
         resinstance.append(temp_chara)
+        res.append(
+            {
+                "userid": temp_userid,
+                "username": temp_username,
+                "img": createImageURL(imgpath),
+                "cardid": temp_cardid,
+                "charaname": temp_cardname,
+                "hp": temp_hp,
+            }
+        )
 
     return res, temp_username, resinstance
 
@@ -351,16 +351,23 @@ async def websocket_endpoint(websocket: WebSocket):
                 imgid = await saveImg(userid, sketch)
                 imgpath = path + f"sketch{imgid}.png"
                 role = RoleAnalyze.analyze(imgpath)
-                if role == "attack":
-                    role = 0
-                if role == "guard":
-                    role = 1
-                if role == "healer":
-                    role = 2
-                if role == "speeder":
-                    role = 3
-                if role == "magician":
-                    role = 4
+                skills=None
+                temp_c=CharactorStatus(0,0,0,0)
+                temp_r=RoleStatus("","","")
+                if role == "Attacker":
+                    skills=Attacker(temp_c,temp_r,0,0,0).show_my_skill()
+                if role == "Guard":
+                    skills=Guard(temp_c,temp_r).show_my_skill()
+                if role == "Healer":
+                    skills=Healer(temp_c,temp_r,0,temp_c,temp_c).show_my_skill()
+                # if role == "speeder":
+                #     role = 3
+                # if role == "magician":
+                #     role = 4
+
+                del temp_c
+                del temp_r
+
                 hp, attack, defence, speed = StatusAnalyze.analyze(imgpath)
                 hp *= 1000
                 attack *= 100
@@ -389,6 +396,7 @@ async def websocket_endpoint(websocket: WebSocket):
                             "attack": attack,
                             "defence": defence,
                             "speed": speed,
+                            "skills":skills
                         },
                     }
                 )

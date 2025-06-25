@@ -8,7 +8,7 @@
 
 
 from abc import *
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from typing import Generic, TypeVar, List, Union, Callable
 import random
 import GameException
@@ -25,41 +25,48 @@ class CharactorStatus(Generic[S]):
     attack: float
     defence: float
     speed: float
-    mp:float=0 
-    grant_mp:float=0 # mpの付与量
-    queue: List[tuple[S, int,bool,str]] = field(default_factory=list) # バフ管理キュー
-    isdeath:bool=False # 死亡判定
-    
+    mp: float = 0
+    grant_mp: float = 0  # mpの付与量
+    queue: List[tuple[S, int, bool, str]] = field(
+        default_factory=list
+    )  # バフ管理キュー
+    isdeath: bool = False  # 死亡判定
+
     def __add__(self, status: S):
-        hp=self.hp + status.hp
-        attack=self.attack + status.attack
-        defence=self.defence + status.defence
-        speed=self.speed + status.speed
-        return CharactorStatus(hp,attack,defence,speed,self.queue,self.isdeath)
-    
-    def __sub__(self,status:S):
-        hp=self.hp - status.hp
-        attack=self.attack - status.attack
-        defence=self.defence - status.defence
-        speed=self.speed - status.speed
-        return CharactorStatus(hp,attack,defence,speed,self.queue,self.isdeath)
-    
-    def __mul__(self,status:S):
-        hp=self.hp * status.hp
-        attack=self.attack * status.attack
-        defence=self.defence * status.defence
-        speed=self.speed * status.speed
-        return CharactorStatus(hp,attack,defence,speed,self.queue,self.isdeath)
+        hp = self.hp + status.hp
+        attack = self.attack + status.attack
+        defence = self.defence + status.defence
+        speed = self.speed + status.speed
+        return CharactorStatus(hp, attack, defence, speed, self.queue, self.isdeath)
 
-    def __truediv__(self,status:S):
-        hp=self.hp / status.hp
-        attack=self.attack / status.attack
-        defence=self.defence / status.defence
-        speed=self.speed / status.speed
-        return CharactorStatus(hp,attack,defence,speed,self.queue,self.isdeath)
+    def __sub__(self, status: S):
+        hp = self.hp - status.hp
+        attack = self.attack - status.attack
+        defence = self.defence - status.defence
+        speed = self.speed - status.speed
+        return CharactorStatus(hp, attack, defence, speed, self.queue, self.isdeath)
 
+    def __mul__(self, status: S):
+        hp = self.hp * status.hp
+        attack = self.attack * status.attack
+        defence = self.defence * status.defence
+        speed = self.speed * status.speed
+        return CharactorStatus(hp, attack, defence, speed, self.queue, self.isdeath)
 
-    def addStatus(self, status: S, lifetime: int = -1,overlapping:bool=False,resolve_type:str="+"):
+    def __truediv__(self, status: S):
+        hp = self.hp / status.hp
+        attack = self.attack / status.attack
+        defence = self.defence / status.defence
+        speed = self.speed / status.speed
+        return CharactorStatus(hp, attack, defence, speed, self.queue, self.isdeath)
+
+    def addStatus(
+        self,
+        status: S,
+        lifetime: int = -1,
+        overlapping: bool = False,
+        resolve_type: str = "+",
+    ):
         """
         バフや回復を付与
         lifetime 0:即時付与（解除不可）
@@ -68,76 +75,79 @@ class CharactorStatus(Generic[S]):
         overlapping : 毎ターン実行するか
         resolve_type : 計算方法 + or - or * or /
         """
-        if resolve_type!="+" or resolve_type!="-" or resolve_type!="*" or resolve_type!="/":
+        if (
+            resolve_type != "+"
+            or resolve_type != "-"
+            or resolve_type != "*"
+            or resolve_type != "/"
+        ):
             # TODO:計算エラー
             pass
-        if lifetime==0:
-            self.resolve(resolve_type,status)
-        self.queue.append([status, lifetime,overlapping,resolve_type])
-    
-    def resolve(self,resolve_type,status:S):
+        if lifetime == 0:
+            self.resolve(resolve_type, status)
+        self.queue.append([status, lifetime, overlapping, resolve_type])
+
+    def resolve(self, resolve_type, status: S):
         """
         楽々計算機
         """
-        result=CharactorStatus(0,0,0,0)
-        if resolve_type=="+":
-            result=self.__add__(status)
-        if resolve_type=="-":
-            result=self.__sub__(status)
-        if resolve_type=="*":
-            result=self.__mul__(status)
-        if resolve_type=="/":
-            result=self.__truediv__(status)
-        self.hp=result.hp
-        self.attack=result.attack
-        self.defence=result.defence
-        self.speed=result.speed
+        result = CharactorStatus(0, 0, 0, 0)
+        if resolve_type == "+":
+            result = self.__add__(status)
+        if resolve_type == "-":
+            result = self.__sub__(status)
+        if resolve_type == "*":
+            result = self.__mul__(status)
+        if resolve_type == "/":
+            result = self.__truediv__(status)
+        self.hp = result.hp
+        self.attack = result.attack
+        self.defence = result.defence
+        self.speed = result.speed
 
-    def reverse_resolve(self,resolve_type,status:S):
+    def reverse_resolve(self, resolve_type, status: S):
         """
         楽々逆計算機
         """
-        result=CharactorStatus(0,0,0,0)
-        if resolve_type=="-":
-            result=self.__add__(status)
-        if resolve_type=="+":
-            result=self.__sub__(status)
-        if resolve_type=="/":
-            result=self.__mul__(status)
-        if resolve_type=="*":
-            result=self.__truediv__(status)
-        self.hp=result.hp
-        self.attack=result.attack
-        self.defence=result.defence
-        self.speed=result.speed
+        result = CharactorStatus(0, 0, 0, 0)
+        if resolve_type == "-":
+            result = self.__add__(status)
+        if resolve_type == "+":
+            result = self.__sub__(status)
+        if resolve_type == "/":
+            result = self.__mul__(status)
+        if resolve_type == "*":
+            result = self.__truediv__(status)
+        self.hp = result.hp
+        self.attack = result.attack
+        self.defence = result.defence
+        self.speed = result.speed
 
-
-    def checkDie(self)->bool:
-        if self.hp<=0:
-            self.isdeath=True
+    def checkDie(self) -> bool:
+        if self.hp <= 0:
+            self.isdeath = True
             return True
         return False
-    
-    def removeAddstatus(self,num:int=-1,remove_type:str="old"):
+
+    def removeAddstatus(self, num: int = -1, remove_type: str = "old"):
         """
         現在かかっているバフを解除します。
         解除されるとステータスは元に戻ります。
         num -1 すべて
         remove_type "new"/"old"
         """
-        if num==-1 or len(self.queue)<=num:
+        if num == -1 or len(self.queue) <= num:
             for i in self.queue:
-                self.reverse_resolve(i[3],i[0])
-                self.queue=[]
-        if remove_type=="new":
+                self.reverse_resolve(i[3], i[0])
+                self.queue = []
+        if remove_type == "new":
             for i in self.queue[num:]:
-                self.reverse_resolve(i[3],i[0])
+                self.reverse_resolve(i[3], i[0])
                 del self.queue[num:]
-        if remove_type=="old":
+        if remove_type == "old":
             for i in self.queue[:num]:
-                self.reverse_resolve(i[3],i[0])
+                self.reverse_resolve(i[3], i[0])
                 del self.queue[:num]
-
 
     def nextTurn(self):
         """
@@ -146,31 +156,31 @@ class CharactorStatus(Generic[S]):
         """
         rem = []
         # turn進行
-        for i,j in enumerate(self.queue):
-            j[1]-=1
-            if j[1]==-2:
-                j[1]=-1
-            if j[1]==-1:
+        for i, j in enumerate(self.queue):
+            j[1] -= 1
+            if j[1] == -2:
+                j[1] = -1
+            if j[1] == -1:
                 rem.append(i)
-            
+
         for i in sorted(rem, reverse=True):
-            effect=self.queue.pop(i)  # 切れた効果を消す
-            self.reverse_resolve(effect[3],effect[0]) # 解消
-        
+            effect = self.queue.pop(i)  # 切れた効果を消す
+            self.reverse_resolve(effect[3], effect[0])  # 解消
+
         for i in self.queue:
             # overlapping 有効
             if i[2]:
-                self.resolve(i[3],i[0])
-    
-    def use_mp(self,point):
-        temp_mp=self.mp-point
+                self.resolve(i[3], i[0])
+
+    def use_mp(self, point):
+        temp_mp = self.mp - point
         # mp不足のとき
-        if(temp_mp<0):
+        if temp_mp < 0:
             raise GameException.NoMP()
-        self.mp=temp_mp
-    
-    def add_mp(self,point):
-        self.mp+=point
+        self.mp = temp_mp
+
+    def add_mp(self, point):
+        self.mp += point
 
 
 @dataclass
@@ -183,7 +193,7 @@ class RoleStatus:
 
     chara_name: str
     nickname: str
-    id_:str=None
+    id_: str = None
     # lookskill:bool #このターンにskillを選択できるか
 
 
@@ -192,6 +202,7 @@ class SkillStatus:
     """
     name:関数名,管理名
     nickname:プレイヤーに表示される技の名前
+    ex:説明文
     lookturn:次使えるまでのターン数
     nowlookturn:現在の待ちターン数(減数方式)
     usetimes:使用回数(-1は無限)
@@ -200,6 +211,7 @@ class SkillStatus:
 
     name: str
     nickname: str
+    ex: str
     lookturn: int = 0
     nowlooktime: int = 0
     usetimes: int = -1
@@ -294,7 +306,7 @@ class Charactor(Charactor_, Generic[C]):
         self.thisTurnSkill: List[tuple[tuple[SkillStatus, Callable], C]] = []
         self.thisTrunGuard: List[tuple[str, float]] = []
         self.skills: List[tuple[SkillStatus, Callable]] = [
-            [SkillStatus("normalAttack", "通常攻撃", 0, 0, -1, True), self.normalAttack]
+            # [SkillStatus("normalAttack", "通常攻撃", 0, 0, -1, True), self.normalAttack]
         ]
         self.mindControledQueue: List[tuple[tuple[SkillStatus, Callable], C]] = []
 
@@ -303,8 +315,10 @@ class Charactor(Charactor_, Generic[C]):
 
     def guardmsg(self, damage: float) -> str:
         return f"防御でダメージ軽減,ダメージを{damage}受けた"
-    def diemsg(self,damage:float):
+
+    def diemsg(self, damage: float):
         return f"ダメージを{damage}受けた。hpがゼロになった。"
+
     def normalAttack(self, target: C):
         target.status.hp -= self.status.attack
 
@@ -356,7 +370,13 @@ class Charactor(Charactor_, Generic[C]):
         if calculationtype == "*":
             return point1 * point2
 
-    def receveBuff(self, Buff: CharactorStatus, lifetime: int = -1,overlapping:bool=False,resolve_type:str="+"):
+    def receveBuff(
+        self,
+        Buff: CharactorStatus,
+        lifetime: int = -1,
+        overlapping: bool = False,
+        resolve_type: str = "+",
+    ):
         """
         バフや回復を付与
         lifetime 0:即時付与（解除不可）
@@ -365,9 +385,15 @@ class Charactor(Charactor_, Generic[C]):
         overlapping : 毎ターン実行するか
         resolve_type : 計算方法 + or - or * or /
         """
-        self.status.addStatus(Buff, lifetime,overlapping,resolve_type)
+        self.status.addStatus(Buff, lifetime, overlapping, resolve_type)
 
-    def receveDeBuff(self, Buff: CharactorStatus, lifetime: int = -1,overlapping:bool=False,resolve_type:str="+"):
+    def receveDeBuff(
+        self,
+        Buff: CharactorStatus,
+        lifetime: int = -1,
+        overlapping: bool = False,
+        resolve_type: str = "+",
+    ):
         """
         バフや回復を付与
         lifetime 0:即時付与（解除不可）
@@ -376,7 +402,7 @@ class Charactor(Charactor_, Generic[C]):
         overlapping : 毎ターン実行するか
         resolve_type : 計算方法 + or - or * or /
         """
-        self.status.addStatus(Buff, lifetime,overlapping,resolve_type)
+        self.status.addStatus(Buff, lifetime, overlapping, resolve_type)
 
     def receveMind(self, skill: tuple[SkillStatus, Callable], target: C = None):
         # スキルが選択されていないとき
@@ -463,6 +489,9 @@ class Charactor(Charactor_, Generic[C]):
             target,
         ]
 
+    def show_my_skill(self):
+        return [asdict(i[0]) for i in self.skills]
+
 
 # Attackerの設定
 class Attacker(Charactor):
@@ -497,14 +526,37 @@ class Attacker(Charactor):
         self.weakattackmsg = "攻撃を与えた！"
         self.missSkill = "攻撃を外した。。。"
         self.thisTurnSkill = []
-        self.skills.append(
+        self.skills.extend(
             [
-                SkillStatus("strongAttack", "強い攻撃", 3, 0, -1, True),
-                self.strongAttack,
+                [
+                    SkillStatus("normalAttack", "弱い攻撃", "ex", 0, 0, -1, True),
+                    self.weakAttack,
+                ],
+                [
+                    SkillStatus("strongAttack", "強い攻撃", "ex", 3, 0, -1, True),
+                    self.strongAttack,
+                ],
+                [
+                    SkillStatus(
+                        name="skill1",
+                        nickname="スキル1",
+                        ex="ex",
+                        lookturn=0,
+                        nowlooktime=0,
+                    ),
+                    self.skill1,
+                ],
+                [
+                    SkillStatus(
+                        name="skill2",
+                        nickname="スキル2",
+                        ex="ex",
+                        lookturn=0,
+                        nowlooktime=0,
+                    ),
+                    self.skill2,
+                ],
             ]
-        )
-        self.skills.append(
-            [SkillStatus("normalAttack", "弱い攻撃", 0, 0, -1, True), self.weakAttack],
         )
 
     def strongAttack(self, target: Charactor) -> None:
@@ -532,6 +584,12 @@ class Attacker(Charactor):
         target.receveDamage(self.status.attack)
         return self.weakattackmsg
 
+    def skill1(self, target: Charactor):
+        pass
+
+    def skill2(self, target: Charactor):
+        pass
+
 
 class Healer(Charactor):
     def __init__(
@@ -555,23 +613,48 @@ class Healer(Charactor):
         self.powerfulRecoveryPower = powerfulBuff
         self.selfDeBuff = selfDeBuff
         self.thisTurnSkill = []
-        self.skills.append(
+        self.skills.extend(
             [
-                SkillStatus(
-                    name="buffAndHeal",
-                    nickname="バフ＆ヒール",
-                    lookturn=1,
-                    nowlooktime=0,
-                ),
-                self.buffHeal,
-            ]
-        )
-        self.skills.append(
-            [
-                SkillStatus(
-                    name="normalHeal", nickname="通常回復", lookturn=0, nowlooktime=0
-                ),
-                self.normalHeal,
+                [
+                    SkillStatus(
+                        name="buffAndHeal",
+                        nickname="バフ＆ヒール",
+                        ex="ex",
+                        lookturn=1,
+                        nowlooktime=0,
+                    ),
+                    self.buffHeal,
+                ],
+                [
+                    SkillStatus(
+                        name="normalHeal",
+                        nickname="通常回復",
+                        ex="ex",
+                        lookturn=0,
+                        nowlooktime=0,
+                    ),
+                    self.normalHeal,
+                ],
+                [
+                    SkillStatus(
+                        name="skill1",
+                        nickname="スキル1",
+                        ex="ex",
+                        lookturn=0,
+                        nowlooktime=0,
+                    ),
+                    self.skill1,
+                ],
+                [
+                    SkillStatus(
+                        name="skill2",
+                        nickname="スキル2",
+                        ex="ex",
+                        lookturn=0,
+                        nowlooktime=0,
+                    ),
+                    self.skill2,
+                ],
             ]
         )
 
@@ -586,23 +669,60 @@ class Healer(Charactor):
         target.receveBuff(CharactorStatus(self.recoveryPower, 0, 0, 0), -1)
         pass
 
+    def skill1(self, target: Charactor):
+        pass
+
+    def skill2(self, target: Charactor):
+        pass
+
 
 class Guard(Charactor):
     def __init__(self, status: CharactorStatus, role: RoleStatus):
         super().__init__(status, role)
-        self.skills.append(
-            [SkillStatus("normalGuard", "通常ガード", 1, 0, -1, True), self.normalGuard]
-        )
-        self.skills.append(
-            [SkillStatus("strongGuard", "強力ガード", 0, 0, 1, True), self.strongGuard]
+        self.skills.extend(
+            [
+                [
+                    SkillStatus("normalGuard", "通常ガード", "ex", 1, 0, -1, True),
+                    self.normalGuard,
+                ],
+                [
+                    SkillStatus("strongGuard", "強力ガード", "ex", 0, 0, 1, True),
+                    self.strongGuard,
+                ],
+                [
+                    SkillStatus(
+                        name="skill1",
+                        nickname="スキル1",
+                        ex="ex",
+                        lookturn=0,
+                        nowlooktime=0,
+                    ),
+                    self.skill1,
+                ],
+                [
+                    SkillStatus(
+                        name="skill2",
+                        nickname="スキル2",
+                        ex="ex",
+                        lookturn=0,
+                        nowlooktime=0,
+                    ),
+                    self.skill2,
+                ],
+            ]
         )
 
     # TODO:未完成
-    def normalGuard(self):
-
+    def normalGuard(self, target: Charactor):
         pass
 
-    def strongGuard(self):
+    def strongGuard(self, target: Charactor):
+        pass
+
+    def skill1(self, target: Charactor):
+        pass
+
+    def skill2(self, target: Charactor):
         pass
 
 
