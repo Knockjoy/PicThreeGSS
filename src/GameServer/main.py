@@ -40,7 +40,7 @@ class BTPlayer:
 
 @dataclass
 class BTManager:
-    battleid: int
+    battleid: str
     battle: Battle1v1
     player1: BTPlayer
     player2: BTPlayer
@@ -188,7 +188,7 @@ async def matching_loop():
             bt = Battle1v1(user1Player, user2Player)
             all_battle.append(
                 BTManager(
-                    battleid=battleid,
+                    battleid=temp_battleid,
                     battle=bt,
                     player1=BTPlayer(
                         userid=user1[0],
@@ -198,10 +198,10 @@ async def matching_loop():
                         thisTurn=False,
                     ),
                     player2=BTPlayer(
-                        userid=user1[0],
-                        socket=user1[1],
-                        playerinstance=user1Player,
-                        cardids=user1[2],
+                        userid=user2[0],
+                        socket=user2[1],
+                        playerinstance=user2Player,
+                        cardids=user2[2],
                         thisTurn=False,
                     ),
                 )
@@ -244,7 +244,7 @@ async def matching_loop():
         await asyncio.sleep(1)
 
 
-def findBattle(battleid) -> BTManager:
+def findBattle(battleid) -> List[BTManager]:
     battle = [item for item in all_battle if item.battleid == battleid]
     return battle
 
@@ -253,24 +253,29 @@ def setSkill(userid, battleid, cardid, skillnum, targetcardid):
     # battleidからバトルを絞る
     # useridからplayerインスタンスを見つける
     battle = findBattle(battleid=battleid)
+    if(battle==[]):
+        # TODO:error処理
+        return "error"
+    battle=battle[0]
+    
     player = ""
 
     # 自分自身がどちらか
-    if battle.player1.userid == userid:
-        player = battle.player1
-    if battle.player2.userid == userid:
-        player = battle.player2
+    for i in [battle.player1,battle.player2]:
+        if i.userid == userid:
+            player = i
 
+    assert(player!="")
     # ターゲットはどれか
-    if battle.player1.cardids.index(targetcardid):
-        targetchara = battle.player1.cardids.index(targetcardid)
-        targetchara = battle.player1.playerinstance.cards[targetchara]
-    if battle.player2.cardids.index(targetcardid):
-        targetchara = battle.player2.playerinstance.cards.index(targetcardid)
-        targetchara = battle.player2.playerinstance.cards[targetchara]
+    for i in [battle.player1,battle.player2]:
+        if targetcardid in i.cardids:
+            targetchara = i.cardids.index(targetcardid)
+            targetchara = i.playerinstance.cards[targetchara]
+
 
     mychara = player.playerinstance.cards[player.cardids.index(cardid)]
-    mychara.setThisTurnSkill(mychara.skills[skillnum], targetchara)
+    mychara.setThisTurnSkill(mychara.skills[int(skillnum)], targetchara)
+    print(mychara.thisTurnSkill)
     pass
 
 
@@ -283,6 +288,9 @@ async def checkBattle(battleid):
     # TODO:バトルを実行できるか
     # TODO:バトル終了
     battle = findBattle(battleid)
+    if battle==[]:
+        # TODO:none battle
+        return ""
     if not (battle.player1.thisTurn and battle.player2.thisTurn):
         # TODO:実行できなかったとき
         for i in [battle.player1, battle.player2]:
