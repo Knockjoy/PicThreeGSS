@@ -121,7 +121,7 @@ def CardPacking(cardids):
         if card[5] == "Attack":
             temp_chara = Attacker(
                 cstatus,
-                RoleStatus("attacker", temp_cardname,id_=temp_cardid),
+                RoleStatus("attacker", temp_cardname, id_=temp_cardid),
                 storngPower=10,
                 strongHitPr=15,
                 oneHitKillPr=20,
@@ -129,12 +129,14 @@ def CardPacking(cardids):
             pass
         if card[5] == "Guard":
             # TODO:未完成に注意
-            temp_chara = Guard(cstatus, RoleStatus("guard", temp_cardname,id_=temp_cardid))
+            temp_chara = Guard(
+                cstatus, RoleStatus("guard", temp_cardname, id_=temp_cardid)
+            )
             pass
         if card[5] == "Healer":
             temp_chara = Healer(
                 cstatus,
-                RoleStatus("healer", temp_cardname,id_=temp_cardid),
+                RoleStatus("healer", temp_cardname, id_=temp_cardid),
                 10,
                 CharactorStatus(hp=10, attack=10, defence=10, speed=10),
                 CharactorStatus(-10, 0, 0, 0),
@@ -247,13 +249,28 @@ async def matching_loop():
 async def battle_loop():
     print("wake up battle sys")
     while True:
-        if all_battle!=[]:
+        if all_battle != []:
             for i in all_battle:
                 if i.player1.thisTurn and i.player2.thisTurn:
-                    result=i.battle.exec_battle()
+                    i.player1.thisTurn=False,
+                    i.player2.thisTurn=False
+
+                    result = i.battle.exec_battle()
+                    print("result:")
+                    print(result)
+                    for i in [i.player1, i.player2]:
+                        await i.socket.send_json(
+                            {
+                                "status": "exec_battle",
+                                "battleid": battleid,
+                                "msg": "success",
+                            }
+                        )
+                    
                 pass
             pass
-        asyncio.sleep(1)
+        await asyncio.sleep(1)
+
 
 def findBattle(battleid) -> List[BTManager]:
     battle = [item for item in all_battle if item.battleid == battleid]
@@ -264,29 +281,31 @@ def setSkill(userid, battleid, cardid, skillnum, targetcardid):
     # battleidからバトルを絞る
     # useridからplayerインスタンスを見つける
     battle = findBattle(battleid=battleid)
-    if(battle==[]):
+    if battle == []:
         # TODO:error処理
         return "error"
-    battle=battle[0]
-    
+    battle = battle[0]
+
     player = ""
 
     # 自分自身がどちらか
-    for i in [battle.player1,battle.player2]:
+    for i in [battle.player1, battle.player2]:
         if i.userid == userid:
             player = i
 
-    assert(player!="")
+    assert player != ""
+    
+    if player.thisTurn:
+        return "error"
     # ターゲットはどれか
-    for i in [battle.player1,battle.player2]:
+    for i in [battle.player1, battle.player2]:
         if targetcardid in i.cardids:
             targetchara = i.cardids.index(targetcardid)
             targetchara = i.playerinstance.cards[targetchara]
 
-
     mychara = player.playerinstance.cards[player.cardids.index(cardid)]
     mychara.setThisTurnSkill(mychara.skills[int(skillnum)], targetchara)
-    print(mychara.thisTurnSkill)
+    player.thisTurn=True
     pass
 
 
@@ -299,11 +318,11 @@ async def checkBattle(battleid):
     # TODO:バトルを実行できるか
     # TODO:バトル終了
     battle = findBattle(battleid)
-    if battle==[]:
+    if battle == []:
         print("no battle")
         # TODO:none battle
         return ""
-    battle=battle[0]
+    battle = battle[0]
     if not (battle.player1.thisTurn and battle.player2.thisTurn):
         # TODO:実行できなかったとき
         for i in [battle.player1, battle.player2]:
@@ -330,6 +349,7 @@ def createImageURL(imgpath):
 @app.on_event("startup")
 async def on_startup():
     asyncio.create_task(matching_loop())
+    asyncio.create_task(battle_loop())
 
 
 @app.get("/")
@@ -373,15 +393,15 @@ async def websocket_endpoint(websocket: WebSocket):
                 imgid = await saveImg(userid, sketch)
                 imgpath = path + f"sketch{imgid}.png"
                 role = RoleAnalyze.analyze(imgpath)
-                skills=None
-                temp_c=CharactorStatus(0,0,0,0)
-                temp_r=RoleStatus("","","")
+                skills = None
+                temp_c = CharactorStatus(0, 0, 0, 0)
+                temp_r = RoleStatus("", "", "")
                 if role == "Attacker":
-                    skills=Attacker(temp_c,temp_r,0,0,0).show_my_skill()
+                    skills = Attacker(temp_c, temp_r, 0, 0, 0).show_my_skill()
                 if role == "Guard":
-                    skills=Guard(temp_c,temp_r).show_my_skill()
+                    skills = Guard(temp_c, temp_r).show_my_skill()
                 if role == "Healer":
-                    skills=Healer(temp_c,temp_r,0,temp_c,temp_c).show_my_skill()
+                    skills = Healer(temp_c, temp_r, 0, temp_c, temp_c).show_my_skill()
                 # if role == "speeder":
                 #     role = 3
                 # if role == "magician":
@@ -418,12 +438,11 @@ async def websocket_endpoint(websocket: WebSocket):
                             "attack": attack,
                             "defence": defence,
                             "speed": speed,
-                            "skills":skills
+                            "skills": skills,
                         },
                     }
                 )
             if status == "battle_in":
-                print(all_battle)
                 # ユーザーid、websocket,試合で使うカードid
                 waiting_users.append((userid, websocket, data["cardids"]))
                 await websocket.send_json({"status": "matching_wait"})
@@ -443,7 +462,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     data["skillnum"],
                     data["targetcardid"],
                 )
-                checkBattle(data["battleid"])
+                # checkBattle(data["battleid"])
                 pass
             # await websocket.send_text(f"your msg is {data}")
     except WebSocketDisconnect:
@@ -456,6 +475,8 @@ if __name__ == "__main__":
     # loop=asyncio.new_event_loop()
     # asyncio.set_event_loop(loop)
     # loop.run_until_complete(matching_loop())
-    uvicorn.run("main:app", host="0.0.0.0", port=19004, lifespan="on", reload=True)
+    # uvicorn.run("main:app", host="0.0.0.0", port=19004, lifespan="on", reload=True)
+    uvicorn.run("main:app", host="127.0.0.1", port=50107, lifespan="on", reload=True)
+
     # loop.close()
     pass
