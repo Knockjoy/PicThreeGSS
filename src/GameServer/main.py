@@ -244,6 +244,17 @@ async def matching_loop():
         await asyncio.sleep(1)
 
 
+async def battle_loop():
+    print("wake up battle sys")
+    while True:
+        if all_battle!=[]:
+            for i in all_battle:
+                if i.player1.thisTurn and i.player2.thisTurn:
+                    result=i.battle.exec_battle()
+                pass
+            pass
+        asyncio.sleep(1)
+
 def findBattle(battleid) -> List[BTManager]:
     battle = [item for item in all_battle if item.battleid == battleid]
     return battle
@@ -289,8 +300,10 @@ async def checkBattle(battleid):
     # TODO:バトル終了
     battle = findBattle(battleid)
     if battle==[]:
+        print("no battle")
         # TODO:none battle
         return ""
+    battle=battle[0]
     if not (battle.player1.thisTurn and battle.player2.thisTurn):
         # TODO:実行できなかったとき
         for i in [battle.player1, battle.player2]:
@@ -299,6 +312,7 @@ async def checkBattle(battleid):
             )
         return
     result = battle.battle.exec_battle()
+    print(result)
     # TODO:技の実行順ログ
     for i in [battle.player1, battle.player2]:
         await i.socket.send_json(
