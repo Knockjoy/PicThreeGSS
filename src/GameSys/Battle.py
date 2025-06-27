@@ -69,10 +69,10 @@ class Battle1v1:
                 )
             result = self.check_finish()
 
-            if not result:
+            if result!=None:
                 break
 
-        if not result:
+        if result==None:
             thisturnHistory.append("::nextturn::")
         # Next Turn
         # TODO:MP付与,付与メッセージ    
@@ -84,7 +84,7 @@ class Battle1v1:
                     j.status.add_mp(j.status.grant_mp)
 
         for i in queue:
-            if not result:
+            if result==None:
                 break
             msg = i.nextTurn()
             if msg:
@@ -117,7 +117,7 @@ class Battle1v1:
                     )
                 )
             thisturnHistory.append()
-        if result:
+        if result!=None:
             return {"game_status": "finish", "msg": result, "history": thisturnHistory}
         return {"game_status": "continue", "history": thisturnHistory}
 

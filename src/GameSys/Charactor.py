@@ -577,8 +577,8 @@ class Attacker(Charactor):
         return self.missSkill
 
     def _oneHitKill(self, target: Charactor):
-        target.receveDamage(target.status.hp)
-        return None
+        msg=target.receveDamage(target.status.hp)
+        return msg
 
     def weakAttack(self, target: Charactor):
         target.receveDamage(self.status.attack)
@@ -586,9 +586,11 @@ class Attacker(Charactor):
 
     def skill1(self, target: Charactor):
         pass
+        return "returnmsg"
 
     def skill2(self, target: Charactor):
         pass
+        return "returnmsg"
 
 
 class Healer(Charactor):
@@ -671,9 +673,11 @@ class Healer(Charactor):
 
     def skill1(self, target: Charactor):
         pass
+        return "returnmsg"
 
     def skill2(self, target: Charactor):
         pass
+        return "returnmsg"
 
 
 class Guard(Charactor):
@@ -715,15 +719,19 @@ class Guard(Charactor):
     # TODO:未完成
     def normalGuard(self, target: Charactor):
         pass
+        return "returnmsg"
 
     def strongGuard(self, target: Charactor):
         pass
+        return "returnmsg"
 
     def skill1(self, target: Charactor):
         pass
+        return "returnmsg"
 
     def skill2(self, target: Charactor):
         pass
+        return "returnmsg"
 
 
 # # TODO:未完成
