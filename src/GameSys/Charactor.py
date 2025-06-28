@@ -306,7 +306,7 @@ class Charactor(Charactor_, Generic[C]):
         self.thisTurnSkill: List[tuple[tuple[SkillStatus, Callable], C]] = []
         self.thisTrunGuard: List[tuple[str, float]] = []
         self.skills: List[tuple[SkillStatus, Callable]] = [
-            # [SkillStatus("normalAttack", "通常攻撃", 0, 0, -1, True), self.normalAttack]
+            [SkillStatus("normalAttack", "通常攻撃", 0, 0, -1, True), self.normalAttack]
         ]
         self.mindControledQueue: List[tuple[tuple[SkillStatus, Callable], C]] = []
 
@@ -321,6 +321,7 @@ class Charactor(Charactor_, Generic[C]):
 
     def normalAttack(self, target: C):
         target.status.hp -= self.status.attack
+        return "通常攻撃"
 
     def setGuard(self, guardtype: str, guardpoint: float):
         """
@@ -546,16 +547,7 @@ class Attacker(Charactor):
                     ),
                     self.skill1,
                 ],
-                [
-                    SkillStatus(
-                        name="skill2",
-                        nickname="スキル2",
-                        ex="ex",
-                        lookturn=0,
-                        nowlooktime=0,
-                    ),
-                    self.skill2,
-                ],
+                
             ]
         )
 
@@ -588,9 +580,7 @@ class Attacker(Charactor):
         pass
         return "returnmsg"
 
-    def skill2(self, target: Charactor):
-        pass
-        return "returnmsg"
+
 
 
 class Healer(Charactor):
@@ -647,16 +637,7 @@ class Healer(Charactor):
                     ),
                     self.skill1,
                 ],
-                [
-                    SkillStatus(
-                        name="skill2",
-                        nickname="スキル2",
-                        ex="ex",
-                        lookturn=0,
-                        nowlooktime=0,
-                    ),
-                    self.skill2,
-                ],
+                
             ]
         )
 
@@ -675,9 +656,7 @@ class Healer(Charactor):
         pass
         return "returnmsg"
 
-    def skill2(self, target: Charactor):
-        pass
-        return "returnmsg"
+
 
 
 class Guard(Charactor):
@@ -703,16 +682,7 @@ class Guard(Charactor):
                     ),
                     self.skill1,
                 ],
-                [
-                    SkillStatus(
-                        name="skill2",
-                        nickname="スキル2",
-                        ex="ex",
-                        lookturn=0,
-                        nowlooktime=0,
-                    ),
-                    self.skill2,
-                ],
+                
             ]
         )
 
@@ -729,9 +699,6 @@ class Guard(Charactor):
         pass
         return "returnmsg"
 
-    def skill2(self, target: Charactor):
-        pass
-        return "returnmsg"
 
 
 # # TODO:未完成

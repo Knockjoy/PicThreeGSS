@@ -54,7 +54,7 @@ path = "/root/picthree/PicThreeGSS/src/GameServer/db/imgs/"
 
 # TODO:typing 変更　union(,)＝＞type[userid]に置き換え
 # List[Tuple(Union[int,str],WebSocket,List[Union[int,str]])]
-waiting_users = []
+waiting_users: List[Tuple[str, WebSocket, List[str]]] = []
 
 
 app = FastAPI()
@@ -128,7 +128,6 @@ def CardPacking(cardids):
             )
             pass
         if card[5] == "Guard":
-            # TODO:未完成に注意
             temp_chara = Guard(
                 cstatus, RoleStatus("guard", temp_cardname, id_=temp_cardid)
             )
@@ -142,7 +141,6 @@ def CardPacking(cardids):
                 CharactorStatus(-10, 0, 0, 0),
             )
         # if card[5] == "Speeder":
-        #     # TODO:未完成に注意
         #     temp_chara = Speeder(
         #         cstatus,
         #         RoleStatus("speeder", temp_cardname,id_=temp_cardid),
@@ -153,7 +151,7 @@ def CardPacking(cardids):
         #         cstatus,
         #         RoleStatus("magician", temp_cardname,id_=temp_cardid),
         #         0.5,
-        #         CharactorStatus(0, -1, 0, 0),  # TODO:ここの設定をちゃんと作る
+        #         CharactorStatus(0, -1, 0, 0),
         #         1,
         #         0.3,
         #     )
@@ -163,8 +161,8 @@ def CardPacking(cardids):
                 "userid": temp_userid,
                 "username": temp_username,
                 "img": createImageURL(imgpath),
-                "cardid": temp_cardid,
-                "charaname": temp_cardname,
+                "id": temp_cardid,
+                "name": temp_cardname,
                 "hp": temp_hp,
             }
         )
@@ -216,8 +214,8 @@ async def matching_loop():
                     "status": "match_found",
                     "battleid": temp_battleid,
                     "mycards": user1_cards,
-                    "opponetname": user2name,
-                    "opponet": user2[0],
+                    "opponentname": user2name,
+                    "opponent": user2[0],
                     "opponetcards": user2_cards,
                 }
             )
@@ -227,7 +225,7 @@ async def matching_loop():
                     "battleid": temp_battleid,
                     "mycards": user2_cards,
                     "opponetname": user1name,
-                    "opponet": user2[0],
+                    "opponent": user2[0],
                     "opponetcards": user1_cards,
                 }
             )
@@ -252,21 +250,22 @@ async def battle_loop():
         if all_battle != []:
             for i in all_battle:
                 if i.player1.thisTurn and i.player2.thisTurn:
-                    i.player1.thisTurn=False,
-                    i.player2.thisTurn=False
+                    i.player1.thisTurn = False
+                    i.player2.thisTurn = False
 
                     result = i.battle.exec_battle()
                     print("result:")
                     print(result)
-                    for i in [i.player1, i.player2]:
-                        await i.socket.send_json(
+                    for j in [i.player1, i.player2]:
+                        await j.socket.send_json(
                             {
                                 "status": "exec_battle",
-                                "battleid": battleid,
+                                "battleid": i.battleid,
                                 "msg": "success",
+                                "battle_log": result,
                             }
                         )
-                    
+
                 pass
             pass
         await asyncio.sleep(1)
@@ -294,7 +293,7 @@ def setSkill(userid, battleid, cardid, skillnum, targetcardid):
             player = i
 
     assert player != ""
-    
+
     if player.thisTurn:
         return "error"
     # ターゲットはどれか
@@ -305,7 +304,7 @@ def setSkill(userid, battleid, cardid, skillnum, targetcardid):
 
     mychara = player.playerinstance.cards[player.cardids.index(cardid)]
     mychara.setThisTurnSkill(mychara.skills[int(skillnum)], targetchara)
-    player.thisTurn=True
+    player.thisTurn = True
     pass
 
 
@@ -462,9 +461,6 @@ async def websocket_endpoint(websocket: WebSocket):
                     data["skillnum"],
                     data["targetcardid"],
                 )
-                # checkBattle(data["battleid"])
-                pass
-            # await websocket.send_text(f"your msg is {data}")
     except WebSocketDisconnect:
         websocket.close()
 
@@ -472,11 +468,5 @@ async def websocket_endpoint(websocket: WebSocket):
 if __name__ == "__main__":
     print(RoleAnalyze.analyze("/root/picthree/PicThreeAI/Apple.png"))
     wakeupDB()
-    # loop=asyncio.new_event_loop()
-    # asyncio.set_event_loop(loop)
-    # loop.run_until_complete(matching_loop())
     uvicorn.run("main:app", host="0.0.0.0", port=19004, lifespan="on", reload=True)
     # uvicorn.run("main:app", host="127.0.0.1", port=50107, lifespan="on", reload=True)
-
-    # loop.close()
-    pass

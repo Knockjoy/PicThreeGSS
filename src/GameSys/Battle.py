@@ -28,7 +28,6 @@ class Battle1v1:
 
     def _first_check_exception(self):
         # initの例外チェック
-        # TODO:例外を投げずにreturnし、APIを発行
         pass
 
     def exec_battle(self):
@@ -38,44 +37,46 @@ class Battle1v1:
         thisturnHistory = []
         for i in queue:
             msg = i.execSkill()
-            if msg:
-                thisturnHistory.append(
-                    {
-                        "status": "skill",
-                        "msg": msg,
-                        "cards": {
-                            "player1": [
-                                {
-                                    "charactorStatus": dataclasses.asdict(i.status),
-                                    "skillStatus": [
-                                        dataclasses.asdict(j[0]) for j in i.skills
-                                    ],
-                                    "rolestatus": dataclasses.asdict(i.role),
-                                }
-                                for i in self.p1.cards
-                            ],
-                            "player2": [
-                                {
-                                    "charactorStatus": dataclasses.asdict(i.status),
-                                    "skillStatus": [
-                                        dataclasses.asdict(j[0]) for j in i.skills
-                                    ],
-                                    "rolestatus": dataclasses.asdict(i.role),
-                                }
-                                for i in self.p2.cards
-                            ],
-                        },
-                    }
-                )
+            if msg == None:
+                continue
+
+            thisturnHistory.append(
+                {
+                    "status": "skill",
+                    "msg": msg,
+                    "cards": {
+                        "player1": [
+                            {
+                                "charactorStatus": dataclasses.asdict(i.status),
+                                "skillStatus": [
+                                    dataclasses.asdict(j[0]) for j in i.skills
+                                ],
+                                "rolestatus": dataclasses.asdict(i.role),
+                            }
+                            for i in self.p1.cards
+                        ],
+                        "player2": [
+                            {
+                                "charactorStatus": dataclasses.asdict(i.status),
+                                "skillStatus": [
+                                    dataclasses.asdict(j[0]) for j in i.skills
+                                ],
+                                "rolestatus": dataclasses.asdict(i.role),
+                            }
+                            for i in self.p2.cards
+                        ],
+                    },
+                }
+            )
             result = self.check_finish()
 
-            if result!=None:
+            if result != None:
                 break
 
-        if result==None:
-            thisturnHistory.append("::nextturn::")
+        if result == None:
+            thisturnHistory.append({"status":"::nextturn::"})
         # Next Turn
-        # TODO:MP付与,付与メッセージ    
+        # TODO:MP付与,付与メッセージ
         for i in [self.p1, self.p2]:
             if i.mp_inheritance:
                 i.add_mp(self.grant_mp)
@@ -84,40 +85,39 @@ class Battle1v1:
                     j.status.add_mp(j.status.grant_mp)
 
         for i in queue:
-            if result==None:
+            if result != None:
                 break
             msg = i.nextTurn()
-            if msg:
-                thisturnHistory.append(
-                    thisturnHistory.append(
-                        {
-                            "status": "skill",
-                            "msg": msg,
-                            "cards": {
-                                "player1": [
-                                    {
-                                        "charactorStatus": dataclasses.asdict(i.status),
-                                        "skillStatus": [
-                                            dataclasses.asdict(j[0]) for j in i.skills
-                                        ],
-                                    }
-                                    for i in self.p1.cards
+            if msg == None:
+                continue
+            thisturnHistory.append(
+                {
+                    "status": "skill",
+                    "msg": msg,
+                    "cards": {
+                        "player1": [
+                            {
+                                "charactorStatus": dataclasses.asdict(i.status),
+                                "skillStatus": [
+                                    dataclasses.asdict(j[0]) for j in i.skills
                                 ],
-                                "player2": [
-                                    {
-                                        "charactorStatus": dataclasses.asdict(i.status),
-                                        "skillStatus": [
-                                            dataclasses.asdict(j[0]) for j in i.skills
-                                        ],
-                                    }
-                                    for i in self.p2.cards
+                            }
+                            for i in self.p1.cards
+                        ],
+                        "player2": [
+                            {
+                                "charactorStatus": dataclasses.asdict(i.status),
+                                "skillStatus": [
+                                    dataclasses.asdict(j[0]) for j in i.skills
                                 ],
-                            },
-                        }
-                    )
-                )
-            thisturnHistory.append()
-        if result!=None:
+                            }
+                            for i in self.p2.cards
+                        ],
+                    },
+                }
+            )
+
+        if result != None:
             return {"game_status": "finish", "msg": result, "history": thisturnHistory}
         return {"game_status": "continue", "history": thisturnHistory}
 
