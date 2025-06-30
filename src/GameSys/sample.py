@@ -1,3 +1,5 @@
+# copyright (c) 2025 Yuuki Furuta
+
 import copy
 
 class InnerInstance:

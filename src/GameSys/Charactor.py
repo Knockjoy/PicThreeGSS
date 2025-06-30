@@ -126,6 +126,7 @@ class CharactorStatus(Generic[S]):
     def checkDie(self) -> bool:
         if self.hp <= 0:
             self.isdeath = True
+            self.hp=0
             return True
         return False
 
@@ -306,7 +307,7 @@ class Charactor(Charactor_, Generic[C]):
         self.thisTurnSkill: List[tuple[tuple[SkillStatus, Callable], C]] = []
         self.thisTrunGuard: List[tuple[str, float]] = []
         self.skills: List[tuple[SkillStatus, Callable]] = [
-            [SkillStatus("normalAttack", "通常攻撃", 0, 0, -1, True), self.normalAttack]
+            [SkillStatus("normalAttack", "通常攻撃","ex", 0, 0, -1, True), self.normalAttack]
         ]
         self.mindControledQueue: List[tuple[tuple[SkillStatus, Callable], C]] = []
 
@@ -320,7 +321,7 @@ class Charactor(Charactor_, Generic[C]):
         return f"ダメージを{damage}受けた。hpがゼロになった。"
 
     def normalAttack(self, target: C):
-        target.status.hp -= self.status.attack
+        target.receveDamage(self.status.attack)
         return "通常攻撃"
 
     def setGuard(self, guardtype: str, guardpoint: float):
@@ -352,7 +353,8 @@ class Charactor(Charactor_, Generic[C]):
             if self.status.checkDie():
                 return self.diemsg(damage=damage)
             return self.guardmsg(self.decreeceOrPer(thisguard[0], damage, thisguard[1]))
-
+        if damage < 0:
+            damage = 0
         self.status.hp -= damage
         # 死亡チェック
         if self.status.checkDie():
@@ -461,10 +463,13 @@ class Charactor(Charactor_, Generic[C]):
             and self.thisTurnSkill[0][0].usetimes == 0
         ):
             raise GameException.DontUseSkill()
+        target=self.thisTurnSkill[1].role.id_
         resultmsg = self.thisTurnSkill[0][1](self.thisTurnSkill[1])  # 技を実行
         self.thisTurnSkill[0][0].useSkill()  # 技ステータスに反映
         self.TurnInitialize()  # 初期化
-        return resultmsg
+        print("log")
+        print([self.role.id_,target,resultmsg])
+        return [self.role.id_,target,resultmsg]
 
     def TurnInitialize(self):
         self.thisTurnSkill = []  # 初期化

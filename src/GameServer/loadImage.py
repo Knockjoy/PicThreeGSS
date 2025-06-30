@@ -1,3 +1,5 @@
+# copyright (c) 2025 Yuuki Furuta
+
 import sqlite3
 from PIL import Image
 import datetime
@@ -17,8 +19,8 @@ def wakeupDB():
         """
         CREATE TABLE IF NOT EXISTS images(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            userid INTEGER NOT NULL,
-            imgid INTEGER NOT NULL
+            userid TEXT NOT NULL,
+            imgid TEXT NOT NULL
         )
         """
     )
@@ -27,7 +29,7 @@ def wakeupDB():
         """
         CREATE TABLE IF NOT EXISTS users(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            userid INTEGER NOT NULL,
+            userid TEXT NOT NULL,
             username TEXT NOT NULL
         )
         """
@@ -38,9 +40,9 @@ def wakeupDB():
         """
         CREATE TABLE IF NOT EXISTS cards(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            userid INTEGER NOT NULL,
-            cardid INTEGER NOT NULL,
-            imgid INTEGER NOT NULL,
+            userid TEXT NOT NULL,
+            cardid TEXT NOT NULL,
+            imgid TEXT NOT NULL,
             charaname TEXT NOT NULL,
             typeid TEXT NOT NULL,
             hp INTEGER NOT NULL,

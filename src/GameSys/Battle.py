@@ -36,7 +36,12 @@ class Battle1v1:
         # TODO:Tryさせる
         thisturnHistory = []
         for i in queue:
-            msg = i.execSkill()
+            
+            res= i.execSkill()
+            if (res==None) :continue
+            executor=res[0]
+            target=res[1]
+            msg=res[2]
             if msg == None:
                 continue
 
@@ -44,6 +49,8 @@ class Battle1v1:
                 {
                     "status": "skill",
                     "msg": msg,
+                    "executor":executor,
+                    "target":target,
                     "cards": {
                         "player1": [
                             {
@@ -74,7 +81,7 @@ class Battle1v1:
                 break
 
         if result == None:
-            thisturnHistory.append({"status":"::nextturn::"})
+            thisturnHistory.append({"status":"::nextturn::","msg":"Next turn"})
         # Next Turn
         # TODO:MP付与,付与メッセージ
         for i in [self.p1, self.p2]:
@@ -92,7 +99,7 @@ class Battle1v1:
                 continue
             thisturnHistory.append(
                 {
-                    "status": "skill",
+                    "status": "nextTurn",
                     "msg": msg,
                     "cards": {
                         "player1": [
@@ -124,21 +131,19 @@ class Battle1v1:
     def check_finish(self):
         p1flag = False
         p2flag = False
-        for i in self.p1.cards:
-            # 一度でも死んでないカードがあれば
-            p1flag = p1flag or not (i.status.isdeath)
-        for i in self.p2.cards:
-            # 一度でも死んでないカードがあれば
-            p2flag = p2flag or not (i.status.isdeath)
+        if []==list(filter(lambda x:x.status.isdeath==False,self.p1.cards)):
+            p1flag = True
+        if []==list(filter(lambda x:x.status.isdeath==False,self.p2.cards)):
+            p2flag = True
 
-        if not (p1flag or p2flag):
+        if p1flag and p2flag:
             # 引き分け
             return {"game_finish": "draw"}
-        if not p1flag:
-            # p2勝ち
-            return {"game_finish": "win", "player": "p2"}
-        if not p2flag:
+        if not p1flag and p2flag:
             # p1勝ち
+            return {"game_finish": "win", "player": "p2"}
+        if not p2flag and p1flag:
+            # p2勝ち
             return {"game_finish": "win", "player": "p1"}
         return None
 

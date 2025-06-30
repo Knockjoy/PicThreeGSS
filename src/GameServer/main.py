@@ -118,7 +118,7 @@ def CardPacking(cardids):
             hp=card[6], attack=card[7], defence=card[8], speed=card[9]
         )
         temp_chara = None
-        if card[5] == "Attack":
+        if card[5] == "Attacker":
             temp_chara = Attacker(
                 cstatus,
                 RoleStatus("attacker", temp_cardname, id_=temp_cardid),
@@ -216,7 +216,7 @@ async def matching_loop():
                     "mycards": user1_cards,
                     "opponentname": user2name,
                     "opponent": user2[0],
-                    "opponetcards": user2_cards,
+                    "opponentcards": user2_cards,
                 }
             )
             await user2[1].send_json(
@@ -224,9 +224,9 @@ async def matching_loop():
                     "status": "match_found",
                     "battleid": temp_battleid,
                     "mycards": user2_cards,
-                    "opponetname": user1name,
+                    "opponentname": user1name,
                     "opponent": user2[0],
-                    "opponetcards": user1_cards,
+                    "opponentcards": user1_cards,
                 }
             )
         temp_battleid = None
@@ -263,6 +263,7 @@ async def battle_loop():
                                 "battleid": i.battleid,
                                 "msg": "success",
                                 "battle_log": result,
+                                "players":{"player1":i.player1.userid,"player2":i.player2.userid}
                             }
                         )
 
@@ -410,7 +411,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 del temp_r
 
                 hp, attack, defence, speed = StatusAnalyze.analyze(imgpath)
-                hp *= 1000
+                hp *= 100
                 attack *= 100
                 defence *= 100
                 speed *= 100
@@ -427,7 +428,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.send_json(
                     {
                         "status": "cardCreated",
-                        "careateStatus": "success",
+                        "createStatus": "success",
                         "cardid": cardid,
                         "charaname": charaname,
                         "sketch": data["sketch"],
@@ -443,7 +444,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 )
             if status == "battle_in":
                 # ユーザーid、websocket,試合で使うカードid
-                waiting_users.append((userid, websocket, data["cardids"]))
+                waiting_users.append((data["userid"], websocket, data["cardids"]))
                 await websocket.send_json({"status": "matching_wait"})
             if status == "get_card":
                 await websocket.send_json(
