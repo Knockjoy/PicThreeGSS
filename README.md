@@ -1,5 +1,4 @@
 # Welcom to PicThreeGSS
-picThreeはu-22 2025に出場するチームです。
 
 GameSysServerの略です。
 
