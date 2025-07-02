@@ -8,9 +8,10 @@
 
 from Player import Player
 from Charactor import *
-from typing import Tuple, List
+from typing import Tuple, List,Dict
 import copy
 import dataclasses
+from BattleMsg import BattleMsg,BattleMotion
 
 
 class Battle1v1:
@@ -30,25 +31,25 @@ class Battle1v1:
         # initの例外チェック
         pass
 
-    def exec_battle(self):
+    def exec_battle(self)->Dict:
         # self._check_exception()  # TODO:すべてのカードにスキルがセットされているか
         queue = self.sortCardsQueue()
         # TODO:Tryさせる
-        thisturnHistory = []
+        thisturnHistory:List[dict] = []
         for i in queue:
             
             res= i.execSkill()
             if (res==None) :continue
             executor=res[0]
             target=res[1]
-            msg=res[2]
+            msg:List[BattleMsg]=res[2]
             if msg == None:
                 continue
 
             thisturnHistory.append(
                 {
                     "status": "skill",
-                    "msg": msg,
+                    "msg": [dataclasses.asdict(i) for i in msg],
                     "executor":executor,
                     "target":target,
                     "cards": {

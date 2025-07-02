@@ -9,9 +9,10 @@
 
 from abc import *
 from dataclasses import dataclass, field, asdict
-from typing import Generic, TypeVar, List, Union, Callable
+from typing import Generic, TypeVar, List, Union, Callable,Tuple
 import random
 import GameException
+from BattleMsg import BattleMsg,BattleMotion,BattleMotionMsg
 
 C = TypeVar("C")
 C_ = TypeVar("C_")
@@ -304,7 +305,7 @@ class Charactor(Charactor_, Generic[C]):
 
         super().__init__(status, role)
 
-        self.thisTurnSkill: List[tuple[tuple[SkillStatus, Callable], C]] = []
+        self.thisTurnSkill: List[Tuple[Tuple[SkillStatus, Callable], C]] = []
         self.thisTrunGuard: List[tuple[str, float]] = []
         self.skills: List[tuple[SkillStatus, Callable]] = [
             [SkillStatus("normalAttack", "通常攻撃","ex", 0, 0, -1, True), self.normalAttack]
@@ -312,7 +313,7 @@ class Charactor(Charactor_, Generic[C]):
         self.mindControledQueue: List[tuple[tuple[SkillStatus, Callable], C]] = []
 
     def noguardmsg(self, damage: float) -> str:
-        return f"ダメージを{str(damage)}受けた"
+        return f"{self.role.nickname}はダメージを{str(damage)}受けた。"
 
     def guardmsg(self, damage: float) -> str:
         return f"防御でダメージ軽減,ダメージを{damage}受けた"
@@ -320,9 +321,11 @@ class Charactor(Charactor_, Generic[C]):
     def diemsg(self, damage: float):
         return f"ダメージを{damage}受けた。hpがゼロになった。"
 
-    def normalAttack(self, target: C):
-        target.receveDamage(self.status.attack)
-        return "通常攻撃"
+    def normalAttack(self, target: C)->List[BattleMsg]:
+        damagemsg=target.receveDamage(self.status.attack)
+        msg=BattleMsg(f"{self.role.nickname}の通常攻撃!!",BattleMotionMsg("",BattleMotion.none))
+        
+        return [msg,damagemsg]
 
     def setGuard(self, guardtype: str, guardpoint: float):
         """
@@ -332,7 +335,7 @@ class Charactor(Charactor_, Generic[C]):
         self.thisTrunGuard.append([guardtype, guardpoint])
         pass
 
-    def receveDamage(self, damage: float, penetrate: bool = False) -> None:
+    def receveDamage(self, damage: float, penetrate: bool = False) -> BattleMsg:
         """
         damage:float ダメージ量
         penetrate:bool 防御貫通 通常時false
@@ -341,7 +344,7 @@ class Charactor(Charactor_, Generic[C]):
             # 貫通の貫通塞ぎ
             thisguard = self.thisTrunGuard.pop(0)
             if thisguard[1] == -1:
-                return "強力ガードによる一撃必殺無効化"
+                return BattleMsg("強力ガードによる一撃必殺無効化",BattleMotionMsg("",BattleMotion.none))
         if self.thisTrunGuard != [] and not penetrate:
             # ガードされるとき
             thisguard = self.thisTrunGuard.pop(0)
@@ -351,15 +354,15 @@ class Charactor(Charactor_, Generic[C]):
             self.status.hp -= damage
             # 死亡チェック
             if self.status.checkDie():
-                return self.diemsg(damage=damage)
-            return self.guardmsg(self.decreeceOrPer(thisguard[0], damage, thisguard[1]))
+                return BattleMsg(self.diemsg(damage=damage),BattleMotionMsg("",BattleMotion.none))
+            return BattleMsg(self.guardmsg(self.decreeceOrPer(thisguard[0], damage, thisguard[1])),BattleMotionMsg("",BattleMotion.none))
         if damage < 0:
             damage = 0
         self.status.hp -= damage
         # 死亡チェック
         if self.status.checkDie():
-            return self.diemsg(damage=damage)
-        return self.noguardmsg(damage)
+            return BattleMsg(self.diemsg(damage=damage),BattleMotionMsg("",BattleMotion.none))
+        return BattleMsg(self.noguardmsg(damage),BattleMotionMsg(self.role.id_,BattleMotion.damaged))
 
     def decreeceOrPer(
         self, calculationtype: str, point1: float, point2: float
@@ -464,7 +467,7 @@ class Charactor(Charactor_, Generic[C]):
         ):
             raise GameException.DontUseSkill()
         target=self.thisTurnSkill[1].role.id_
-        resultmsg = self.thisTurnSkill[0][1](self.thisTurnSkill[1])  # 技を実行
+        resultmsg:List[BattleMsg] = self.thisTurnSkill[0][1](self.thisTurnSkill[1])  # 技を実行
         self.thisTurnSkill[0][0].useSkill()  # 技ステータスに反映
         self.TurnInitialize()  # 初期化
         print("log")
@@ -566,24 +569,26 @@ class Attacker(Charactor):
         # 止められるときの処理
         if random.random() < self.strongHitAwayPr:  # hitしたとき
             if random.random() <= self.oneHitKillProBability:  # 一撃必殺したとき
-                self._oneHitKill(target)
-                return self.onehitkillmsg
+                result=self._oneHitKill(target)
+                return result
             else:
-                target.receveDamage(self.strongPower)
-                return self.strongAttackmsg
-        return self.missSkill
+                msg=BattleMsg("強い攻撃")
+                result=target.receveDamage(self.strongPower)
+                return [msg,result]
+        return BattleMsg(self.missSkill)
 
     def _oneHitKill(self, target: Charactor):
-        msg=target.receveDamage(target.status.hp)
-        return msg
+        msg=BattleMsg(f"{self.role.nickname}の一撃必殺!!")
+        result=target.receveDamage(target.status.hp)
+        return [msg,result]
 
     def weakAttack(self, target: Charactor):
-        target.receveDamage(self.status.attack)
-        return self.weakattackmsg
+        result=target.receveDamage(self.status.attack)
+        return [BattleMsg(self.weakattackmsg),result]
 
     def skill1(self, target: Charactor):
         pass
-        return "returnmsg"
+        return [BattleMsg("returnmsg")]
 
 
 
@@ -652,14 +657,16 @@ class Healer(Charactor):
         target.receveBuff(self.powerfulRecoveryPower)
         self.receveDeBuff(self.selfDeBuff, 1)
         pass
+        return [BattleMsg("")]
 
     def normalHeal(self, target: Charactor):
         target.receveBuff(CharactorStatus(self.recoveryPower, 0, 0, 0), -1)
         pass
+        return [BattleMsg("")]
 
     def skill1(self, target: Charactor):
         pass
-        return "returnmsg"
+        return [BattleMsg("returnmsg")]
 
 
 
@@ -693,16 +700,17 @@ class Guard(Charactor):
 
     # TODO:未完成
     def normalGuard(self, target: Charactor):
-        pass
-        return "returnmsg"
+        if (self==target):
+            return [BattleMsg(f"{self.role.nickname}は身構えている。",BattleMotionMsg(self.role.id_,BattleMotion.gurded))]
+        return [BattleMsg(f"{self.role.nickname}は{target.role.nickname}を守っている",BattleMotionMsg(target.role.id_,BattleMotion.gurded))]
 
     def strongGuard(self, target: Charactor):
         pass
-        return "returnmsg"
+        return [BattleMsg("returnmsg",BattleMotionMsg("",BattleMotion.none))]
 
     def skill1(self, target: Charactor):
         pass
-        return "returnmsg"
+        return [BattleMsg("returnmsg",BattleMotionMsg("",BattleMotion.none))]
 
 
 
