@@ -310,7 +310,7 @@ class Charactor(Charactor_, Generic[C]):
         self.thisTrunGuard: List[tuple[str, float]] = []
         self.skills: List[tuple[SkillStatus, Callable]] = [
             [
-                SkillStatus("normalAttack", "通常攻撃", "ex", 0, 0, -1, True),
+                SkillStatus("normalAttack", "通常攻撃", "相手に攻撃を与えます。\n計算式: 相手の防御力-自分のアタック力", 0, 0, -1, True),
                 self.normalAttack,
             ]
         ]

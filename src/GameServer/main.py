@@ -266,7 +266,8 @@ async def battle_loop():
                                 "players":{"player1":i.player1.userid,"player2":i.player2.userid}
                             }
                         )
-
+                    if(result["game_status"]=="status"):
+                        del i
                 pass
             pass
         await asyncio.sleep(1)
@@ -470,5 +471,7 @@ if __name__ == "__main__":
     print(RoleAnalyze.analyze("/root/picthree/PicThreeAI/Apple.png"))
     wakeupDB()
     # uvicorn.run("main:app",host="192.168.1.201",port=19004,lifespan="on",reload=True)
-    uvicorn.run("main:app", host="0.0.0.0", port=19005, lifespan="on", reload=True)
+    # uvicorn.run("main:app", host="0.0.0.0", port=19005, lifespan="on", reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=19004, lifespan="on", reload=True)
+    
     # uvicorn.run("main:app", host="127.0.0.1", port=50107, lifespan="on", reload=True)

@@ -139,13 +139,13 @@ class Battle1v1:
 
         if p1flag and p2flag:
             # 引き分け
-            return {"game_finish": "draw"}
+            return "引き分け"
         if not p1flag and p2flag:
             # p1勝ち
-            return {"game_finish": "win", "player": "p2"}
+            return f"{self.p2.user_name}の勝ち"
         if not p2flag and p1flag:
             # p2勝ち
-            return {"game_finish": "win", "player": "p1"}
+            return f"{self.p1.user_name}の勝ち"
         return None
 
     def sortCardsQueue(self) -> List[Charactor]:
