@@ -9,10 +9,10 @@
 
 from abc import *
 from dataclasses import dataclass, field, asdict
-from typing import Generic, TypeVar, List, Union, Callable,Tuple
+from typing import Generic, TypeVar, List, Union, Callable, Tuple
 import random
 import GameException
-from BattleMsg import BattleMsg,BattleMotion,BattleMotionMsg
+from BattleMsg import BattleMsg, BattleMotion, BattleMotionMsg
 
 C = TypeVar("C")
 C_ = TypeVar("C_")
@@ -86,7 +86,8 @@ class CharactorStatus(Generic[S]):
             pass
         if lifetime == 0:
             self.resolve(resolve_type, status)
-        self.queue.append([status, lifetime, overlapping, resolve_type])
+        self.resolve(resolve_type, status)
+        self.queue.append([status, lifetime-1, overlapping, resolve_type])
 
     def resolve(self, resolve_type, status: S):
         """
@@ -127,7 +128,7 @@ class CharactorStatus(Generic[S]):
     def checkDie(self) -> bool:
         if self.hp <= 0:
             self.isdeath = True
-            self.hp=0
+            self.hp = 0
             return True
         return False
 
@@ -308,9 +309,14 @@ class Charactor(Charactor_, Generic[C]):
         self.thisTurnSkill: List[Tuple[Tuple[SkillStatus, Callable], C]] = []
         self.thisTrunGuard: List[tuple[str, float]] = []
         self.skills: List[tuple[SkillStatus, Callable]] = [
-            [SkillStatus("normalAttack", "通常攻撃","ex", 0, 0, -1, True), self.normalAttack]
+            [
+                SkillStatus("normalAttack", "通常攻撃", "ex", 0, 0, -1, True),
+                self.normalAttack,
+            ]
         ]
         self.mindControledQueue: List[tuple[tuple[SkillStatus, Callable], C]] = []
+        self.avoidAct: bool = False
+        self.avoidPer: float = 0.5
 
     def noguardmsg(self, damage: float) -> str:
         return f"{self.role.nickname}はダメージを{str(damage)}受けた。"
@@ -321,11 +327,13 @@ class Charactor(Charactor_, Generic[C]):
     def diemsg(self, damage: float):
         return f"ダメージを{damage}受けた。hpがゼロになった。"
 
-    def normalAttack(self, target: C)->List[BattleMsg]:
-        damagemsg=target.receveDamage(self.status.attack)
-        msg=BattleMsg(f"{self.role.nickname}の通常攻撃!!",BattleMotionMsg("",BattleMotion.none))
-        
-        return [msg,damagemsg]
+    def normalAttack(self, target: C) -> List[BattleMsg]:
+        result_msg,damagemsg = target.receveDamage(self.status.attack)
+        msg = BattleMsg(
+            f"{self.role.nickname}の通常攻撃!!\n{result_msg}", BattleMotionMsg("", BattleMotion.none)
+        )
+
+        return [msg]
 
     def setGuard(self, guardtype: str, guardpoint: float):
         """
@@ -340,29 +348,64 @@ class Charactor(Charactor_, Generic[C]):
         damage:float ダメージ量
         penetrate:bool 防御貫通 通常時false
         """
-        if self.thisTrunGuard != [] and penetrate:
-            # 貫通の貫通塞ぎ
-            thisguard = self.thisTrunGuard.pop(0)
-            if thisguard[1] == -1:
-                return BattleMsg("強力ガードによる一撃必殺無効化",BattleMotionMsg("",BattleMotion.none))
-        if self.thisTrunGuard != [] and not penetrate:
-            # ガードされるとき
-            thisguard = self.thisTrunGuard.pop(0)
-            damage = self.decreeceOrPer(thisguard[0], damage, thisguard[1])
-            if damage < 0:
-                damage = 0
-            self.status.hp -= damage
-            # 死亡チェック
+        receiveDamage =  damage -self.status.defence
+
+        if self.avoidAct:
+            self.avoidAct = False
+            if random.random() <= self.avoidPer:
+                return f"{self.role.chara_name}は攻撃を回避した！",BattleMsg(f"{self.role.chara_name}は攻撃を回避した！",BattleMotionMsg("",BattleMotion.none))
+        if penetrate:
+            self.status.hp-=damage
+            if self.status.hp-damage<0:
+                self.status.hp=0
             if self.status.checkDie():
-                return BattleMsg(self.diemsg(damage=damage),BattleMotionMsg("",BattleMotion.none))
-            return BattleMsg(self.guardmsg(self.decreeceOrPer(thisguard[0], damage, thisguard[1])),BattleMotionMsg("",BattleMotion.none))
-        if damage < 0:
-            damage = 0
-        self.status.hp -= damage
+                return self.diemsg(receiveDamage),BattleMsg(
+                    self.diemsg(damage=receiveDamage),
+                    BattleMotionMsg("", BattleMotion.none),
+                )
+            return f"{self.role.nickname}は{damage}ダメージ受けた",BattleMsg(f"{self.role.nickname}は{damage}ダメージ受けた",BattleMotionMsg("",BattleMotion.none))
+        # if self.thisTrunGuard != [] and penetrate:
+        #     # 貫通の貫通塞ぎ
+        #     thisguard = self.thisTrunGuard.pop(0)
+        #     if thisguard[1] == -1:
+        #         return BattleMsg(
+        #             "強力ガードによる一撃必殺無効化",
+        #             BattleMotionMsg("", BattleMotion.none),
+        #         )
+        # if self.thisTrunGuard != [] and not penetrate:
+        #     # ガードされるとき
+        #     thisguard = self.thisTrunGuard.pop(0)
+        #     receiveDamage = self.decreeceOrPer(
+        #         thisguard[0], receiveDamage, thisguard[1]
+        #     )
+        #     if receiveDamage < 0:
+        #         receiveDamage = 0
+        #     self.status.hp -= receiveDamage
+        #     # 死亡チェック
+        #     if self.status.checkDie():
+        #         return BattleMsg(
+        #             self.diemsg(damage=receiveDamage),
+        #             BattleMotionMsg("", BattleMotion.none),
+        #         )
+        #     return BattleMsg(
+        #         self.guardmsg(
+        #             self.decreeceOrPer(thisguard[0], receiveDamage, thisguard[1])
+        #         ),
+        #         BattleMotionMsg("", BattleMotion.none),
+        #     )
+        if receiveDamage < 0:
+            receiveDamage = 0
+        self.status.hp -= receiveDamage
         # 死亡チェック
         if self.status.checkDie():
-            return BattleMsg(self.diemsg(damage=damage),BattleMotionMsg("",BattleMotion.none))
-        return BattleMsg(self.noguardmsg(damage),BattleMotionMsg(self.role.id_,BattleMotion.damaged))
+            return self.diemsg(damage=receiveDamage),BattleMsg(
+                self.diemsg(damage=receiveDamage),
+                BattleMotionMsg("", BattleMotion.none),
+            )
+        return self.noguardmsg(damage=receiveDamage),BattleMsg(
+            self.noguardmsg(receiveDamage),
+            BattleMotionMsg(self.role.id_, BattleMotion.damaged),
+        )
 
     def decreeceOrPer(
         self, calculationtype: str, point1: float, point2: float
@@ -434,6 +477,7 @@ class Charactor(Charactor_, Generic[C]):
         """
         スキルの制限に関する処理やバフの効果処理
         """
+        self.avoidAct=False
         for i in self.skills:
             i[0].nextTurn()
         self.status.nextTurn()
@@ -466,13 +510,19 @@ class Charactor(Charactor_, Generic[C]):
             and self.thisTurnSkill[0][0].usetimes == 0
         ):
             raise GameException.DontUseSkill()
-        target=self.thisTurnSkill[1].role.id_
-        resultmsg:List[BattleMsg] = self.thisTurnSkill[0][1](self.thisTurnSkill[1])  # 技を実行
+        if self.thisTurnSkill[0][0].target_exist:
+            target = self.thisTurnSkill[1].role.id_
+            resultmsg: List[BattleMsg] = self.thisTurnSkill[0][1](
+                self.thisTurnSkill[1]
+        )  # 技を実行
+        else:
+            target=""
+            resultmsg:List[BattleMsg]=self.thisTurnSkill[0][1]()
         self.thisTurnSkill[0][0].useSkill()  # 技ステータスに反映
         self.TurnInitialize()  # 初期化
         print("log")
-        print([self.role.id_,target,resultmsg])
-        return [self.role.id_,target,resultmsg]
+        print([self.role.id_, target, resultmsg])
+        return [self.role.id_, target, resultmsg]
 
     def TurnInitialize(self):
         self.thisTurnSkill = []  # 初期化
@@ -535,62 +585,83 @@ class Attacker(Charactor):
         self.weakattackmsg = "攻撃を与えた！"
         self.missSkill = "攻撃を外した。。。"
         self.thisTurnSkill = []
+        self.avoidPer = 0.75
         self.skills.extend(
             [
                 [
-                    SkillStatus("normalAttack", "弱い攻撃", "ex", 0, 0, -1, True),
-                    self.weakAttack,
-                ],
-                [
-                    SkillStatus("strongAttack", "強い攻撃", "ex", 3, 0, -1, True),
-                    self.strongAttack,
+                    SkillStatus(
+                        "penetrationAttack",
+                        "貫通攻撃",
+                        "相手が防御していても、貫通して攻撃できます。",
+                        0,
+                        0,
+                        -1,
+                        True,
+                    ),
+                    self.penetrationAttack,
                 ],
                 [
                     SkillStatus(
-                        name="skill1",
-                        nickname="スキル1",
-                        ex="ex",
-                        lookturn=0,
-                        nowlooktime=0,
+                        "avoidance",
+                        "回避",
+                        "敵の攻撃を75%の確率で回避できます。",
+                        0,
+                        0,
+                        -1,
+                        False,
                     ),
-                    self.skill1,
+                    self.avoidance,
                 ],
-                
+                # [
+                #     SkillStatus(
+                #         name="skill1",
+                #         nickname="スキル1",
+                #         ex="ex",
+                #         lookturn=0,
+                #         nowlooktime=0,
+                #     ),
+                #     self.skill1,
+                # ],
             ]
         )
 
-    def strongAttack(self, target: Charactor) -> None:
-        """
-        strongAttack:Attacker,target:Charactor
-        敵に強い攻撃を与えることができます。
-        TODO:計算方法の決定
-        ダメージ=通常攻撃の1.5倍？確率で一撃
-        """
-        # 止められるときの処理
-        if random.random() < self.strongHitAwayPr:  # hitしたとき
-            if random.random() <= self.oneHitKillProBability:  # 一撃必殺したとき
-                result=self._oneHitKill(target)
-                return result
-            else:
-                msg=BattleMsg("強い攻撃")
-                result=target.receveDamage(self.strongPower)
-                return [msg,result]
-        return BattleMsg(self.missSkill)
+    # def strongAttack(self, target: Charactor) -> None:
+    #     """
+    #     strongAttack:Attacker,target:Charactor
+    #     敵に強い攻撃を与えることができます。
+    #     TODO:計算方法の決定
+    #     ダメージ=通常攻撃の1.5倍？確率で一撃
+    #     """
+    #     # 止められるときの処理
+    #     if random.random() < self.strongHitAwayPr:  # hitしたとき
+    #         if random.random() <= self.oneHitKillProBability:  # 一撃必殺したとき
+    #             result=self._oneHitKill(target)
+    #             return result
+    #         else:
+    #             msg=BattleMsg("強い攻撃")
+    #             result=target.receveDamage(self.strongPower)
+    #             return [msg,result]
+    #     return BattleMsg(self.missSkill)
 
-    def _oneHitKill(self, target: Charactor):
-        msg=BattleMsg(f"{self.role.nickname}の一撃必殺!!")
-        result=target.receveDamage(target.status.hp)
-        return [msg,result]
+    # def _oneHitKill(self, target: Charactor):
+    #     msg=BattleMsg(f"{self.role.nickname}の一撃必殺!!")
+    #     result=target.receveDamage(target.status.hp)
+    #     return [msg,result]
 
-    def weakAttack(self, target: Charactor):
-        result=target.receveDamage(self.status.attack)
-        return [BattleMsg(self.weakattackmsg),result]
-
-    def skill1(self, target: Charactor):
+    # def weakAttack(self, target: Charactor):
+    #     result=target.receveDamage(self.status.attack)
+    #     return [BattleMsg(self.weakattackmsg),result]
+    def skill1(self):
         pass
-        return [BattleMsg("returnmsg")]
+    def avoidance(self):
+        self.avoidAct = True
+        return [BattleMotionMsg(f"{self.role.nickname}は身構えている",BattleMotionMsg("",BattleMotion.none))]
+        pass
 
-
+    def penetrationAttack(self, target: Charactor):
+        msg = f"{self.role.nickname}の貫通攻撃!!"
+        resultmsg,result = target.receveDamage(self.status.attack, True)
+        return [BattleMsg(f"{msg}\n{resultmsg}",BattleMotionMsg("",BattleMotion.none))]
 
 
 class Healer(Charactor):
@@ -615,60 +686,63 @@ class Healer(Charactor):
         self.powerfulRecoveryPower = powerfulBuff
         self.selfDeBuff = selfDeBuff
         self.thisTurnSkill = []
+        self.avoidPer = 0.5
         self.skills.extend(
             [
                 [
                     SkillStatus(
-                        name="buffAndHeal",
-                        nickname="バフ＆ヒール",
-                        ex="ex",
-                        lookturn=1,
+                        name="Heal",
+                        nickname="回復",
+                        ex="選んだ相手を回復させる事ができます。",
+                        lookturn=0,
                         nowlooktime=0,
+                        usetimes=-1,
+                        target_exist=True,
                     ),
-                    self.buffHeal,
+                    self.Heal,
                 ],
                 [
                     SkillStatus(
-                        name="normalHeal",
-                        nickname="通常回復",
-                        ex="ex",
-                        lookturn=0,
-                        nowlooktime=0,
+                        "avoidance",
+                        "回避",
+                        "50%の確率で回避できます。",
+                        0,
+                        0,
+                        -1,
+                        False,
                     ),
-                    self.normalHeal,
+                    self.avoidance,
                 ],
                 [
                     SkillStatus(
-                        name="skill1",
-                        nickname="スキル1",
-                        ex="ex",
-                        lookturn=0,
-                        nowlooktime=0,
+                        "debuff",
+                        "デバフ",
+                        "選択した相手にデバフを2ターン継続する",
+                        0,
+                        0,
+                        -1,
+                        True,
                     ),
-                    self.skill1,
+                    self.debuff,
                 ],
-                
             ]
         )
 
     # TODO:show my skills
-    def buffHeal(self, target: Charactor):
+    def Heal(self, target: Charactor):
+        msg = f"{self.role.chara_name}は{target.role.chara_name}を回復させた。"
+        result_,result = target.receveBuff(self.powerfulRecoveryPower)
+        return [BattleMsg(f"{msg}\n{result_}",BattleMotionMsg("",BattleMotion.none))]
 
-        target.receveBuff(self.powerfulRecoveryPower)
-        self.receveDeBuff(self.selfDeBuff, 1)
+    def avoidance(self):
+        self.avoidAct = True
+        return [BattleMotionMsg(f"{self.role.nickname}は身構えている",BattleMotionMsg("",BattleMotion.none))]
         pass
-        return [BattleMsg("")]
 
-    def normalHeal(self, target: Charactor):
-        target.receveBuff(CharactorStatus(self.recoveryPower, 0, 0, 0), -1)
-        pass
-        return [BattleMsg("")]
-
-    def skill1(self, target: Charactor):
-        pass
-        return [BattleMsg("returnmsg")]
-
-
+    def debuff(self, target: Charactor):
+        msg = f"{self.role.chara_name}は{self.role.chara_name}にデバフをかけた。"
+        target.receveDeBuff(CharactorStatus(1, 1, 0, 1), 2, False, "*")
+        return [BattleMsg(f"{msg}")]
 
 
 class Guard(Charactor):
@@ -677,40 +751,57 @@ class Guard(Charactor):
         self.skills.extend(
             [
                 [
-                    SkillStatus("normalGuard", "通常ガード", "ex", 1, 0, -1, True),
+                    SkillStatus(
+                        "normalGuard",
+                        "通常ガード",
+                        "選択した相手に2ターンだけ防御を5付与します",
+                        0,
+                        0,
+                        -1,
+                        True,
+                    ),
                     self.normalGuard,
                 ],
                 [
-                    SkillStatus("strongGuard", "強力ガード", "ex", 0, 0, 1, True),
-                    self.strongGuard,
+                    SkillStatus("everyoneGurd", "防御付与", "防御力を付与します", 0, 0, 1, True),
+                    self.everyoneGuard,
                 ],
-                [
-                    SkillStatus(
-                        name="skill1",
-                        nickname="スキル1",
-                        ex="ex",
-                        lookturn=0,
-                        nowlooktime=0,
-                    ),
-                    self.skill1,
-                ],
-                
+                # [
+                #     SkillStatus(
+                #         name="skill1",
+                #         nickname="スキル1",
+                #         ex="ex",
+                #         lookturn=0,
+                #         nowlooktime=0,
+                #     ),
+                #     self.skill1,
+                # ],
             ]
         )
 
+
+    def skill1(self):
+        return BattleMsg("",BattleMotionMsg("",BattleMotion.none))
     # TODO:未完成
     def normalGuard(self, target: Charactor):
-        if (self==target):
-            return [BattleMsg(f"{self.role.nickname}は身構えている。",BattleMotionMsg(self.role.id_,BattleMotion.gurded))]
-        return [BattleMsg(f"{self.role.nickname}は{target.role.nickname}を守っている",BattleMotionMsg(target.role.id_,BattleMotion.gurded))]
+        target.receveBuff(CharactorStatus(0, 0, 5, 0), 2, False, "+")
+        if self == target:
+            return [
+                BattleMsg(
+                    f"{self.role.nickname}は身構えている。",
+                    BattleMotionMsg(self.role.id_, BattleMotion.gurded),
+                )
+            ]
+        return [
+            BattleMsg(
+                f"{self.role.nickname}は{target.role.nickname}を守っている",
+                BattleMotionMsg(target.role.id_, BattleMotion.gurded),
+            )
+        ]
 
-    def strongGuard(self, target: Charactor):
-        pass
-        return [BattleMsg("returnmsg",BattleMotionMsg("",BattleMotion.none))]
-
-    def skill1(self, target: Charactor):
-        pass
-        return [BattleMsg("returnmsg",BattleMotionMsg("",BattleMotion.none))]
+    def everyoneGuard(self, target: Charactor):
+        target.receveBuff(CharactorStatus(0, 0, 1, 0), 0, False, "+")
+        return [BattleMsg(f"{target.role.nickname}は防御力が1上がった", BattleMotionMsg("", BattleMotion.none))]
 
 
 

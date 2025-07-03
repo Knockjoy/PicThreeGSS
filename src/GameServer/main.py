@@ -390,7 +390,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 )
                 userid = data["userID"]
                 charaname = data["charaname"]
-                imgid = await saveImg(userid, sketch)
+                imgid = await saveImg(userid, sketch)   
                 imgpath = path + f"sketch{imgid}.png"
                 role = RoleAnalyze.analyze(imgpath)
                 skills = None
@@ -470,5 +470,5 @@ if __name__ == "__main__":
     print(RoleAnalyze.analyze("/root/picthree/PicThreeAI/Apple.png"))
     wakeupDB()
     # uvicorn.run("main:app",host="192.168.1.201",port=19004,lifespan="on",reload=True)
-    # uvicorn.run("main:app", host="0.0.0.0", port=19004, lifespan="on", reload=True)
-    uvicorn.run("main:app", host="127.0.0.1", port=50107, lifespan="on", reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=19005, lifespan="on", reload=True)
+    # uvicorn.run("main:app", host="127.0.0.1", port=50107, lifespan="on", reload=True)
