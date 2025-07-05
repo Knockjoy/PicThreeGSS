@@ -26,7 +26,6 @@ import RoleAnalyze
 import StatusAnalyze
 
 
-# TODO:バトルの進行(ターン実行のみ)
 
 
 @dataclass
@@ -349,6 +348,7 @@ def createImageURL(imgpath):
 
 @app.on_event("startup")
 async def on_startup():
+    wakeupDB()
     asyncio.create_task(matching_loop())
     asyncio.create_task(battle_loop())
 
@@ -471,7 +471,7 @@ if __name__ == "__main__":
     print(RoleAnalyze.analyze("/root/picthree/PicThreeAI/Apple.png"))
     wakeupDB()
     # uvicorn.run("main:app",host="192.168.1.201",port=19004,lifespan="on",reload=True)
-    # uvicorn.run("main:app", host="0.0.0.0", port=19005, lifespan="on", reload=True)
-    uvicorn.run("main:app", host="0.0.0.0", port=19004, lifespan="on", reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=19005, lifespan="on", reload=True)
+    # uvicorn.run("main:app", host="0.0.0.0", port=19004, lifespan="on", reload=True)
     
     # uvicorn.run("main:app", host="127.0.0.1", port=50107, lifespan="on", reload=True)

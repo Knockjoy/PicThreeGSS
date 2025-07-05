@@ -106,6 +106,14 @@ class CharactorStatus(Generic[S]):
         self.attack = result.attack
         self.defence = result.defence
         self.speed = result.speed
+        if self.hp<0:
+            self.hp=0
+        if self.attack<0:
+            self.attack=0
+        if self.defence<0:
+            self.defence=0
+        if self.speed<0:
+            self.speed=0
 
     def reverse_resolve(self, resolve_type, status: S):
         """
@@ -124,6 +132,15 @@ class CharactorStatus(Generic[S]):
         self.attack = result.attack
         self.defence = result.defence
         self.speed = result.speed
+        if self.hp<0:
+            self.hp=0
+        if self.attack<0:
+            self.attack=0
+        if self.defence<0:
+            self.defence=0
+        if self.speed<0:
+            self.speed=0
+
 
     def checkDie(self) -> bool:
         if self.hp <= 0:
@@ -356,7 +373,7 @@ class Charactor(Charactor_, Generic[C]):
                 return f"{self.role.chara_name}は攻撃を回避した！",BattleMsg(f"{self.role.chara_name}は攻撃を回避した！",BattleMotionMsg("",BattleMotion.none))
         if penetrate:
             self.status.hp-=damage
-            if self.status.hp-damage<0:
+            if (self.status.hp)<0:
                 self.status.hp=0
             if self.status.checkDie():
                 return self.diemsg(receiveDamage),BattleMsg(
@@ -490,10 +507,11 @@ class Charactor(Charactor_, Generic[C]):
         """
         # TODO:技メッセージリターン
         resultmsg = "none"
+        if self.status.isdeath:
+            return None
         if self.mindControledQueue != []:
             resultmsg: list = []
             for i in self.mindControledQueue:
-                # TODO:mindcontrolされるときの処理
                 # マインドコントロールが成功したとき
                 resultmsg.append(i[0][1](i[1]))  # 技を実行
                 i[0][0].useSkill()  # 技ステータスに反映
@@ -629,7 +647,6 @@ class Attacker(Charactor):
     #     """
     #     strongAttack:Attacker,target:Charactor
     #     敵に強い攻撃を与えることができます。
-    #     TODO:計算方法の決定
     #     ダメージ=通常攻撃の1.5倍？確率で一撃
     #     """
     #     # 止められるときの処理
@@ -730,9 +747,9 @@ class Healer(Charactor):
 
     # TODO:show my skills
     def Heal(self, target: Charactor):
-        msg = f"{self.role.chara_name}は{target.role.chara_name}を回復させた。"
-        result_,result = target.receveBuff(self.powerfulRecoveryPower)
-        return [BattleMsg(f"{msg}\n{result_}",BattleMotionMsg("",BattleMotion.none))]
+        msg = f"{self.role.nickname}は{target.role.nickname}を回復させた。"
+        target.receveBuff(CharactorStatus(10,0,0,0),-1,False,"+")
+        return [BattleMsg(f"{msg}",BattleMotionMsg("",BattleMotion.none))]
 
     def avoidance(self):
         self.avoidAct = True
@@ -740,9 +757,9 @@ class Healer(Charactor):
         pass
 
     def debuff(self, target: Charactor):
-        msg = f"{self.role.chara_name}は{self.role.chara_name}にデバフをかけた。"
-        target.receveDeBuff(CharactorStatus(1, 1, 0, 1), 2, False, "*")
-        return [BattleMsg(f"{msg}")]
+        msg = f"{self.role.nickname}は{self.role.nickname}にデバフをかけた。"
+        target.receveDeBuff(CharactorStatus(5, 0, 0, 0), 2, False, "-")
+        return [BattleMsg(f"{msg}",BattleMotionMsg("",BattleMotion.none))]
 
 
 class Guard(Charactor):
@@ -782,7 +799,6 @@ class Guard(Charactor):
 
     def skill1(self):
         return BattleMsg("",BattleMotionMsg("",BattleMotion.none))
-    # TODO:未完成
     def normalGuard(self, target: Charactor):
         target.receveBuff(CharactorStatus(0, 0, 5, 0), 2, False, "+")
         if self == target:
@@ -805,7 +821,6 @@ class Guard(Charactor):
 
 
 
-# # TODO:未完成
 # class Speeder(Charactor):
 #     def __init__(self, status, role):
 #         super().__init__(status, role)
